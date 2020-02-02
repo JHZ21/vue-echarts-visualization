@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>showCharts</title>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/echarts.common.min.js" type="text/javascript"></script>
+    <script src="js/vue.min.js"></script>
+
+    <script src="js/ajax.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        #all {
+            background-color: #ebeaef;
+        }
+    </style>
+</head>
+<body>
+<div id="all" style="height: 100%;">
+
+    <jchart v-for="chart in charts" :chart="chart"></jchart>
+
+</div>
+</body>
+
+<script type="text/x-template" id="j-chart-template">
+    <div :id="chart.id" style="margin: 5px;" :style="chartStyle"></div>
+</script>
+<script>
+    Vue.component('jchart', {
+        props: ['chart'],
+        template: '#j-chart-template',
+        data: function () {
+            return {
+                chartStyle: {}
+            }
+        },
+        methods: {
+            // 请求数据获取到注入图表函数的集群
+            packageCallupdateData(chart) {
+                //请求数据
+                this.ajaxChartData(chart);
+            },
+            ajaxChartData(chart = this, lines = 0) {
+                let _this = this;
+
+                let vStrdStr = this.vStrdStr(chart);
+                let pattern = this.computePattern(chart);
+                lines = lines ? lines : chart.dataset.previewRows;
+
+                //访问数据维度和度量具体数据 ，并保存
+                oOrdinaryJqueryAjax({
+                    url: url_root + "fileHandle/getInfo.json?method=fastGet",
+                    data: {
+                        fileName: chart.dataset.whichDataset,
+                        vStr: vStrdStr.vStr,
+                        dStr: vStrdStr.dStr,
+                        lines,
+                        pattern
+                    }
+                }, function (response) {
+                    if (response.message === "Success") {
+
+                        if (response.data) {
+
+                            for (let key in response.data) {
+                                //删除第一行数据（维度度量名称）
+                                delete response.data[key];
+                                break;
+                            }
+                            chart.dataset.storage.chartData = response.data;
+                            //开始更新图表数据工作
+                            let updateAll = chart.id ? false : true;
+                            _this.updateDataset(chart, updateAll);
+                        } else {
+                            console.log("维度和度量数据错误");
+                        }
+
+                    } else {
+                        console.log("获取维度和度量错误");
+                    }
+                })
+            },
+            vStrdStr(chart = this) {
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                let check_v = checked.demension;
+                let check_d = checked.measure;
+                if (check_v < 1 || check_d < 1) {
+                    console.log("维度和度量有为勾选");
+                    return
+                }
+                let vStr = "";
+                let dStr = "";
+
+                for (let i = 0; i < check_v.length; i++) {
+                    let order = dataset.demensions[check_v[i]];
+
+                    vStr += order + '/';
+                }
+                vStr = vStr.substr(0, vStr.length - 1);
+
+                for (let i = 0; i < check_d.length; i++) {
+                    let order = dataset.measures[check_d[i]];
+
+                    dStr += order + '/';
+                }
+                dStr = dStr.substr(0, dStr.length - 1);
+
+                return {
+                    vStr,
+                    dStr
+                }
+            },
+            computePattern(chart = this) {
+                let pattern = '';
+                let dataset = chart.dataset;
+                let checkedMeasure = dataset.checked.measure;
+                let oComputeWAy = dataset.measureComputeWay;
+                for (let i = 0; i < checkedMeasure.length; i++) {
+                    let way = oComputeWAy[checkedMeasure[i]];
+                    if (!way) {
+                        way = 'sum';
+                    }
+                    pattern += way + '/';
+                }
+                pattern = pattern.substr(0, pattern.length - 1);
+                return pattern;
+            },
+            updateDataset(chart = this, updateAll = true) {
+                if (this.setOption || this.setOption === false) {
+                    this.setOption = true;
+                }
+                //用checked里的维度和度量！！！
+                //更新series, seriesTooltopValue
+                if (updateAll) {
+                    this.updateSeries();
+                } else {
+                    this.setSeriesName(chart)
+                }
+                //线图，柱图时
+                if (chart.option.series[0].type === 'line' || chart.option.series[0].type === 'bar') {
+                    this.updateDatasetLineBar(chart);
+                }
+                // 饼图时
+                if (chart.option.series[0].type === 'pie') {
+                    this.updateDatasetPie(chart);
+                }
+                if (updateAll) {
+                    //先设置其他的，再保存选了哪些维度和度量
+                    this.storageCheckedDataset();
+                }
+
+                //公共导入legend.data
+                this.nameSeriesToLegend(chart);
+
+            },
+            setSeriesName(chart = this) {
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                let series = chart.option.series;
+                for (let i = 0; i < checked.measure.length; i++) {
+                    var tname = checked.measure[i];
+                    //如果别名存在，则赋值别名
+                    series[i].name = this.methodAlias(chart)[tname] ? this.methodAlias(chart)[tname] : tname;
+                }
+            },
+            nameSeriesToLegend(chart = this) {
+                // console.log(chart.option.series[0]);
+                let series = chart.option.series;
+                if (series.length < 1) return;
+                chart.option.legend.data = [];
+
+                if (series[0].type === 'line' || series[0].type === 'bar') {
+                    for (let i = 0; i < series.length; i++) {
+                        chart.option.legend.data[i] = series[i].name;
+                    }
+                } else if (series[0].type === 'pie') {
+                    let data = series[0].data;
+                    for (let i = 0; i < data.length; i++) {
+                        chart.option.legend.data[i] = data[i].name;
+                    }
+                }
+            },
+            datasetNameToArray(tname, chart = this) {
+                let checked = chart.dataset.checked;
+                if (checked.demension.indexOf(tname) >= 0) {
+                    //查维度 合并返回
+                    if (chart.id) {
+                        return this.methodDimensionArray(chart);
+                    } else {
+                        return this.dimensionArray;
+                    }
+                } else if (checked.measure.indexOf(tname) >= 0) {
+                    //查度量，从this.measureArray计算缓冲中找出
+                    let index = checked.measure.indexOf(tname);
+                    if (chart.id) {
+                        return this.methodMeasureArray(chart)[index];
+                    } else {
+                        return this.measureArray[index];
+                    }
+
+                }
+
+                // let dataIndex = storage.chartData[0].indexOf(tname);
+                // if(dataIndex < 0){
+                //     console.log(tname+'该度量名，无对应数据');
+                //     return;
+                // }
+                // let aResult = []
+                // // i=1 跳过第一个
+                // for(let i=1; i<storage.chartData.length; i++){
+                //     aResult.push(storage.chartData[i][dataIndex])
+                // }
+                // return aResult;
+            },
+            // 功能函数
+            methodAlias(chart = this) {
+                let result = {};
+                let legendDate = chart.option.legend.data;
+                //度量原名数组
+                let measure = chart.dataset.storage.checkedMeasure;
+                if (measure.length > 0) {
+                    for (let i = 0; i < legendDate.length; i++) {
+                        result[measure[i]] = legendDate[i]
+                    }
+                }
+                return result;
+            },
+            methodDimensionArray(chart) {
+                let chartData = chart.dataset.storage.chartData;
+                if (chartData) {
+                    let aDimension = [];
+                    for (let key in chartData) {
+                        // let dimension = '';
+                        // key = key.replace('[','');
+                        // key = key.replace(']','');
+                        // key = key.replace(',','-');
+                        // key = key.replace(' ','');
+
+                        // for(let item in eval(key)){
+                        //     dimension += item +'-';
+                        // }
+                        // dimension = dimension.substring(0,dimension.length - 1);
+                        aDimension.push(key);
+                    }
+                    return aDimension;
+                } else {
+                    return [];
+                }
+            },
+            methodMeasureArray(chart) {
+                let chartData = chart.dataset.storage.chartData;
+                let dimension = [];
+
+                dimension = Object.keys(chartData);
+
+                if (dimension !== []) {
+                    let len = chartData[dimension[0]].length;
+                    let aMeasure = new Array(len);
+                    for (let i = 0; i < len; i++) {
+                        aMeasure[i] = [];
+                    }
+                    for (let i = 0; i < dimension.length; i++) {
+                        let array = chartData[dimension[i]];
+                        for (let j = 0; j < len; j++) {
+                            aMeasure[j].push(array[j]);
+                        }
+                    }
+                    return aMeasure;
+                } else {
+                    return [];
+                }
+            },
+
+            CopyIndependent: function (a, b) {
+                // a.others = $.extend(true,{}, b.others);
+                Vue.set(a, 'others', $.extend(true, {}, b.others));
+                a.dataset = $.extend(true, {}, b.dataset);
+                a.option = $.extend(true, {}, b.option);
+
+            },
+            findChart(name) {
+                // let _this = this;
+                for (let i = 0; i < this.charts.length; i++) {
+                    let tchart = this.charts[i];
+                    if (tchart.id === name) return tchart;
+                }
+            },
+            eChartSetOption(id, option) {
+                let myChart = echarts.init(document.getElementById(id));
+                myChart.setOption(option, true);
+            },
+            //线图柱图
+            updateDatasetLineBar(chart = this) {
+                //设置seires 度量name
+                //设置others.seriesTooltipValue
+
+                let dataset = chart.dataset;
+                // let storage = dataset.storage;
+                let checked = dataset.checked;
+                let tseries = [];
+                var measure_len = checked.measure.length;
+                var demension_len = checked.demension.length;
+
+
+                //series.data
+                let series = chart.option.series;
+                for (let i = 0; i < series.length; i++) {
+                    series[i].data = this.datasetNameToArray(checked.measure[i], chart);
+
+                }
+
+
+                //设置 维度,xAxis
+                if (chart.option.xAxis) {
+                    // if (demension_len === 1) {
+                    //     一个维度时
+                    let tname = checked.demension[0];
+                    chart.option.xAxis[0].data = $.extend(true, [], this.datasetNameToArray(tname, chart));
+
+                    // } else {
+                    //     // 合并多个维度的名字,以“- -”连接
+                    //     var fisrtDemension = $.extend(true, {}, this.datasetNameToArray(checked.demension[0]));
+                    //     for (let i = 1; i < demension_len; i++) {
+                    //         let t = this.datasetNameToArray(checked.demension[i]);
+                    //         for (var j = 0; j < t.length; j++) {
+                    //             if (j < t.length) {
+                    //                 fisrtDemension[j] += "--" + t[j];
+                    //             }
+                    //         }
+                    //     }
+                    //     // 赋值
+                    //     this.option.xAxis[0].data = $.extend(true, [], fisrtDemension);
+                    // }
+                }
+
+
+                // 设置y轴名字,yAxis
+                if (chart.option.yAxis) {
+                    // var tyAxisDemo = $.extend(true, {}, dataset.yAxisdemo);
+                    var tyAxisDemo = $.extend(true, {}, chart.option.yAxis[0]);
+                    if (checked.measure.length >= 1) {
+                        tyAxisDemo.name = checked.measure.length === 1 ? checked.measure[0] : "计量";
+                        chart.option.yAxis = $.extend(true, [], chart.option.yAxis, [tyAxisDemo]);
+                    }
+                }
+
+            },
+            //饼图
+            updateDatasetPie(chart = this) {
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                chart.option.series[0].data = [];
+                let demension = this.datasetNameToArray(checked.demension[0], chart);
+                let measure = this.datasetNameToArray(checked.measure[0], chart);
+                for (let i = 0; i < demension.length; i++) {
+                    chart.option.series[0].data.push({'value': measure[i], 'name': demension[i]})
+                }
+                chart.others.seriesData = $.extend(true, [], chart.option.series[0].data);
+            },
+
+            setPositionSize(chart) {
+                let parent_ele = '#all';
+                let parentWidth = parseFloat($(parent_ele).css('width'));
+                let parentHeight = parseFloat($(parent_ele).css('height'));
+
+                this.chartStyle = {
+                    position: 'absolute',
+                    left: chart.positionSizeScale[0] * parentWidth + 'px',
+                    top: chart.positionSizeScale[1] * parentHeight + 'px',
+                    width: chart.positionSizeScale[2] * parentWidth + 'px',
+                    height: chart.positionSizeScale[3] * parentHeight + 'px'
+                };
+            }
+            // dataInjectDifferentChartType() {
+            //     let chart = this.chart;
+            //     let type = chart.option.series[0].type;
+            //
+            //     if (type === 'line' || type === 'bar') {
+            //         let series = chart.option.series;
+            //         for (let i = 0; i < series.length; i++) {
+            //             series[i].data = this.datasetNameToArray(checked.measure[i]);
+            //         }
+            //
+            //     } else if (type === 'pie') {
+            //         let dataset = this.chart.dataset;
+            //         let checked = dataset.checked;
+            //         this.option.series[0].data = [];
+            //         let demension = this.datasetNameToArray(checked.demension[0]);
+            //         let measure = this.datasetNameToArray(checked.measure[0]);
+            //         for (let i = 0; i < demension.length; i++) {
+            //             this.option.series[0].data.push({'value': measure[i], 'name': demension[i]})
+            //         }
+            //         this.others.seriesData = $.extend(true, [], this.option.series[0].data);
+            //     }
+            //
+            // },
+            // datasetNameToArray(tname) {
+            //     let checked = this.chart.dataset.checked;
+            //     if (checked.demension.indexOf(tname) >= 0) {
+            //         //查维度 合并返回
+            //
+            //         return this.dimensionArray();
+            //     } else if (checked.measure.indexOf(tname) >= 0) {
+            //         //查度量，从this.measureArray计算缓冲中找出
+            //         let index = checked.measure.indexOf(tname);
+            //
+            //         return this.measureArray[index];
+            //     }
+            // },
+            // dimensionArray() {
+            //     let chartData = this.chart.dataset.storage.chartData;
+            //     if (chartData) {
+            //         let aDimension = [];
+            //         for (let key in chartData) {
+            //             aDimension.push(key);
+            //         }
+            //         return aDimension;
+            //     } else {
+            //         return [];
+            //     }
+            // },
+            // measureArray() {
+            //     let dimension = this.dimensionArray;
+            //     let chartData = this.dataset.storage.chartData;
+            //     if (dimension !== []) {
+            //         let len = chartData[dimension[0]].length;
+            //         let aMeasure = new Array(len);
+            //         for (let i = 0; i < len; i++) {
+            //             aMeasure[i] = [];
+            //         }
+            //         for (let i = 0; i < dimension.length; i++) {
+            //             let array = chartData[dimension[i]];
+            //             for (let j = 0; j < len; j++) {
+            //                 aMeasure[j].push(array[j]);
+            //             }
+            //         }
+            //         return aMeasure;
+            //     } else {
+            //         return [];
+            //     }
+            //
+            // },
+        },
+        created() {
+            let chart = this.chart;
+            this.setPositionSize(this.chart);
+
+            //渲染charts所有图表
+            this.$nextTick(() => {
+                //假装删除数据
+                chart.option.series[0].data = [];
+                this.packageCallupdateData(chart);
+                // 渲染所有charts的图表
+                setTimeout(() => {
+                    this.eChartSetOption(chart.id, chart.option);
+                }, 100)
+            });
+        },
+        mounted() {
+
+            // let data = chart.option.series[0].data;
+
+            // if (!data) return;
+
+            // this.$nextTick(function () {
+            //     echarts.init(document.getElementById(chart.id)).setOption(chart.option);
+            // });
+
+        }
+
+    })
+</script>
+
+<script>
+    url_root = "http://bi.lllhy.com/";
+
+    new Vue({
+        el: '#all',
+        data: {
+            boardname: '',
+            charts: []
+        },
+        methods: {},
+        created() {
+
+            let locationHref = window.location.href;
+            this.boardname = locationHref.split('boardname=')[1];
+            if (!this.boardname) return;
+
+            let _this = this;
+            // oOrdinaryJqueryAjax({
+            //     url: url_root+"dashboard/boardaction.json?method=get",
+            //     data:{
+            //         boardname: this.boardname
+            //     }
+            // },function (response) {
+            //     if(response.message === 'Success'){
+            //         console.log(response);
+            //         let chartinfo = JSON.parse(response.data.chartinfo);
+            //         _this.charts = chartinfo.charts;
+            //     }
+            // })
+            //ajax并赋值this.charts
+
+            oOrdinaryJqueryAjax({
+                url: url_root + "dashboard/boardaction.json?method=get",
+                data: {
+                    boardname: this.boardname
+                }
+            }, function (response) {
+                if (response.message === 'Success') {
+                    if (response.data) {
+                        let data = JSON.parse(response.data);
+                        _this.charts = data.charts;
+                        // let charts = _this.charts;
+                        //渲染charts所有图表
+                        // _this.$nextTick(()=>{
+                        //     _this.callRestructureChartsPositionSize(false);
+                        //
+                        //     for(let i=0; i<charts.length; i++){
+                        //         //假装删除数据
+                        //         charts[i].option.series[0].data = [];
+                        //         _this.packageCallupdateData(charts[i]);
+                        //         // 渲染所有charts的图表
+                        //         setTimeout(()=>{
+                        //             _this.eChartSetOption(charts[i].id , charts[i].option);
+                        //         },100)
+                        //
+                        //     }
+                        // });
+                    }
+                }
+            });
+            //
+            // let shareCharts = localStorage.getItem('shareCharts');
+            // shareCharts = JSON.parse(shareCharts);
+            // console.log(shareCharts);
+            // let response = shareCharts;
+            // this.charts = shareCharts.charts;
+
+        },
+
+    })
+</script>
+
+</html>

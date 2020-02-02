@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>数据集</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/iconfont/iconfont.css" rel="stylesheet"/>
+    <link href="css/dashboard2.css" rel="stylesheet"/>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.min.js"></script>
+</head>
+<body>
+<div class="wrap" v-cloak>
+    <div class="workplace">
+        <!--左侧菜单-->
+        <nav  class="side-bar">
+            <ul class="nav">
+                <li class="nav-item">
+                    <div class="user-wrapper">
+                        <div class="profile-image">
+                            <i class="iconfont icon-touxiang"></i>
+                        </div>
+                        <div class="text-wrapper">
+                            <span class="profile-name">{{user}}</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a @click="showPanel =  panelArray[1]" href="javascript:void(0);">
+                        <i class="iconfont icon-shuju icon-title" style="margin-right: 28px;"></i>
+                        <b><span class="menu-title" title="数据集" style="margin-right: 37px">数据集</span></b>
+                    </a>
+
+                </li>
+                <li class="nav-item click-item">
+                    <a @click="showPanel = panelArray[0]" href="javascript:void(0);">
+                        <i class="iconfont icon-yibiaopan" style="margin-right: 28px;"></i>
+                        <b><span class="menu-title" title="仪表板" style="margin-right: 35px;">仪表板</span></b>
+                    </a>
+                </li>
+                <li>
+                    <a @click="showPanel =  panelArray[2]" href="javascript:void(0);">
+                        <i class="iconfont icon-guize icon-title" style="margin-right:22px;"></i>
+                        <b><span class="menu-title" title="数据门户" style="margin-right: 25px">数据门户</span></b>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!--弹出 信息输入面板-->
+        <!--接入数据库 输入面板-->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            MySQL 添加数据源
+                        </h4>
+                    </div>
+                    <div class="self-modal-body">
+                        <div class="self-modal-content">
+                            <div class="login-form-item">
+                                <label class="left-name">显示名称:</label>
+                                <input placeholder="数据源配置列表显示名称" type="text" class="self-input">
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">数据库地址:</label>
+                                <input placeholder="IP" type="text" class="self-input">
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">端口:</label>
+                                <input placeholder="" type="text" class="self-input">
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">数据库:</label>
+                                <input placeholder="数据库名称" type="text" class="self-input">
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">用户名:</label>
+                                <input placeholder="请输入用户名" type="text" class="self-input">
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">密码:</label>
+                                <input placeholder="请输入密码" type="password" class="self-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" style="font-size:14px">关闭
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                                style="font-size: 14px;background-color: #17708c;border: 0;">
+                            提交更改
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--上传文档文件 输入面板-->
+        <div class="modal fade" id="localFileModal" tabindex="-1" role="dialog" aria-labelledby="localFileLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="localFileLabel">
+                            MySQL 添加数据源
+                        </h4>
+                    </div>
+                    <div class="self-modal-body">
+                        <div class="self-modal-content">
+                            <div class="login-form-item">
+                                <label class="left-name">上传的文件：</label>
+                                <!--<input placeholder="数据源配置列表显示名称" type="text" class="self-input">-->
+                                <!--accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"-->
+                                <input type="file" id="updateLocalFile" name="" placeholder="待上传文件">
+
+                            </div>
+                            <div class="login-form-item">
+                                <label class="left-name">重命名:</label>
+                                <input placeholder="默认原文件名" id="localFileRename" type="text" class="self-input">
+                            </div>
+
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" style="font-size:14px">关闭
+                        </button>
+                        <button @click="updateLocalFile" type="button" class="btn btn-primary" data-dismiss="modal"
+                                style="font-size: 14px;background-color: #17708c;border: 0;">
+                            提交更改
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--新建仪表盘 输入面板-->
+        <div class="modal fade" id='newSetModal' tabindex="-1" role="dialog" aria-labelledby="newSetLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="newSetLabel">
+                           新建仪表盘
+                        </h4>
+                    </div>
+                    <div class="self-modal-body">
+                        <div class="self-modal-content">
+                            <div class="login-form-item">
+                                <label class="left-name">仪表盘名称:</label>
+                                <input placeholder="请输入仪表盘名称" id="newDashBoardName" type="text" class="self-input"
+                                       required="required">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" style="font-size:14px">关闭
+                        </button>
+                        <button @click="addDashBoard($event)" type="button" class="btn btn-primary"
+                                style="font-size: 14px;background-color: #17708c;border: 0;">
+                            提交更改
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--数据集-->
+        <div v-if="showPanel ==  panelArray[1]" class="main-panel">
+            <div class="content_right">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="main-panel-wrap">
+                            <nav class="navbar navbar-expand-lg main-panel-nav" role="navigation" style="padding:0;">
+                                <div class="nav-wrap">
+                                    <div class="navbar-header col-md-11 col-lg-11">
+                                        <ul class="navbar-list">
+                                            <li><b><span class="navbar-brand">数据集</span></b></li>
+                                            <li><a  class="data-portals opa" data-toggle="modal"
+                                                   data-target="#myModal">MySQL添加</a></li>
+                                            <li style="position:relative;">
+
+                                                <div data-toggle="modal" data-target="#localFileModal"
+                                                     class="file-button-cover opa">本地上传
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </nav>
+                            <div class="tree-list-normal col-md-11 col-lg-11">
+                                <dl class="tree-list-dl">
+                                    <dt class="tree-list-dt">
+                                        <ul style="list-style: none;">
+                                            <li class="table-head column-1">
+                                                <span>名称</span>
+                                            </li>
+                                            <li class="table-head column-2">
+                                                <span>创建者</span>
+                                            </li>
+                                            <li class="table-head column-3">
+                                                <span>创建／修改时间</span>
+                                            </li>
+                                            <li class="table-head column-5 last-column">
+                                                <span>操作</span>
+                                            </li>
+                                        </ul>
+                                    </dt>
+                                    <dd class="newly_added">
+
+                                        <ul v-for="(item,index) in panels.data_set.info" class="newly_show"
+                                            :key="index">
+
+                                            <li class="table-row first-column column-1"
+                                                style="min-width: 100px;padding-left: 0px;">
+                                                <div class="column-name-wrapper">
+                                                    <a style="margin-right: 10px;"><i
+                                                            class="iconfont icon-jingdianyibiaoban"
+                                                            style="font-size: 23px;"></i></a>
+                                                    <a >
+                                                        <span class="opa" title="" data-spm-anchor-id="">{{item.fileName}}</span>
+                                                    </a>
+                                                </div>
+                                            </li>
+                                            <li class="table-row column-2" >
+                                                <span title="" class="">{{item.user}}</span>
+                                            </li>
+                                            <li class="table-row column-3" >
+                                                <span class="">{{getLocalTime(item.timestamp)}}</span>
+                                            </li>
+                                            <li class="table-row last-column column-5" >
+                                                <a><i class="iconfont icon-bianji2"></i></a>
+                                                <a><i @click="dataSetDeleteFile(item.fileName,index)"
+                                                      class="iconfont icon-shanchu" style="font-size: 16px;"></i></a>
+                                            </li>
+                                        </ul>
+
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--仪表盘-->
+        <div v-else-if="showPanel ==  panelArray[0]" class="main-panel">
+
+            <div class="content_right">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="main-panel-wrap">
+                            <nav class="navbar navbar-expand-lg main-panel-nav" role="navigation" style="padding:0;">
+                                <div class="nav-wrap">
+                                    <div class="navbar-header col-md-11 col-lg-11">
+                                        <ul class="navbar-list">
+                                            <li><b><span class="navbar-brand">仪表板</span></b></li>
+                                            <li><a class="opa">我的</a></li>
+                                            <li><a class="opa" data-toggle="modal" data-target="#newSetModal">新建</a>
+                                            </li>
+                                        </ul>
+
+                                    </div>
+                                </div>
+                            </nav>
+                            <div class="tree-list-normal col-md-11 col-lg-11">
+                                <dl class="tree-list-dl">
+                                    <dt class="tree-list-dt">
+                                        <ul style="list-style: none;">
+                                            <li class="table-head column-1">
+                                                <span>名称</span>
+                                            </li>
+                                            <li class="table-head column-2">
+                                                <span>创建者</span>
+                                            </li>
+                                            <li class="table-head column-3">
+                                                <span>创建／修改时间</span>
+                                            </li>
+                                            <li class="table-head column-5 last-column">
+                                                <span>操作</span>
+                                            </li>
+                                        </ul>
+                                    </dt>
+                                    <dd class="newly_added">
+                                        <ul  v-for="(item,index) in panels.instrument_panel.info"
+                                            class="newly_show" :key="index">
+
+                                            <li class="table-row first-column column-1"
+                                                style="min-width: 100px;padding-left: 0px;">
+                                                <div class="column-name-wrapper">
+                                                    <a style="margin-right: 10px;" href="javascript:void(0);"
+
+                                                       @click="enterDashBoard(item.boardname)"><i
+                                                            class="iconfont icon-jingdianyibiaoban"
+                                                            style="font-size: 23px;"></i></a>
+                                                    <a >
+                                                        <span class="opa" >{{item.boardname}}</span>
+                                                    </a>
+                                                </div>
+                                            </li>
+                                            <li class="table-row column-2" data-spm-anchor-id="">
+                                                <span title="" class="">{{user}}</span>
+                                            </li>
+                                            <li class="table-row column-3" data-spm-anchor-id="">
+                                                <span class="">{{getLocalTime(item.timestemp)}}</span>
+                                            </li>
+                                            <li class="table-row last-column column-5" data-spm-anchor-id="">
+                                                <a><i class="iconfont icon-bianji2"></i></a>
+                                                <a><i @click="instrumentPanelDeleteFile(item.boardname,index)"
+                                                      class="iconfont icon-shanchu" style="font-size: 16px;"></i></a>
+                                            </li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--数据门户-->
+        <div v-else class="main-panel">
+            <div class="content_right">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="main-panel-wrap">
+                            <nav class="navbar navbar-expand-lg main-panel-nav" role="navigation" style="padding:0;">
+                                <div class="nav-wrap">
+                                    <div class="navbar-header col-md-11 col-lg-11">
+                                        <ul class="navbar-list">
+                                            <li><b><span class="navbar-brand">数据门户</span></b></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </nav>
+                            <div class="tree-list-normal col-md-11 col-lg-11">
+                                <dl class="tree-list-dl">
+                                    <dt class="tree-list-dt">
+                                        <ul style="list-style: none;">
+                                            <li class="table-head column-1">
+                                                <span>名称</span>
+                                            </li>
+                                            <li class="table-head column-2">
+                                                <span>创建者</span>
+                                            </li>
+                                            <li class="table-head column-3">
+                                                <span>创建／修改时间</span>
+                                            </li>
+                                            <li class="table-head column-5 last-column">
+                                                <span>操作</span>
+                                            </li>
+                                        </ul>
+                                    </dt>
+                                    <dd class="newly_added">
+                                        <ul v-for="(item,index) in panels.data_portal.info" class="newly_show">
+                                            <li class="table-row first-column column-1"
+                                                style="min-width: 100px;padding-left: 0px;">
+                                                <div class="column-name-wrapper">
+                                                    <a :href="item.portalurl" style="margin-right: 10px;"><i
+                                                            class="iconfont icon-jingdianyibiaoban"
+                                                            style="font-size: 23px;"></i></a>
+                                                    <a >
+                                                        <span class="opa" title="" data-spm-anchor-id="">{{item.portalname}}</span>
+                                                    </a>
+                                                </div>
+                                            </li>
+                                            <li class="table-row column-2" >
+                                                <span title="" class="">{{user}}</span>
+                                            </li>
+                                            <li class="table-row column-3" >
+                                                <span class="">{{getLocalTime(item.timestemp)}}</span>
+                                            </li>
+                                            <li class="table-row last-column column-5">
+                                                <a><i class="iconfont icon-bianji2"></i></a>
+                                                <a><i @click="instrumentPanelDeleteFile(item.boardname, index, 'data_portal')"
+                                                      class="iconfont icon-shanchu" style="font-size: 16px;"></i></a>
+                                            </li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+
+<script>
+    url_root = "http://bi.lllhy.com/";
+
+    new Vue({
+        el: '.wrap',
+        data: {
+            showPanel: 'data_set',
+            panelArray: ['instrument_panel', 'data_set', 'data_portal'],
+            panels: {
+                data_set: {
+                    info: [],
+                },
+                instrument_panel: {
+                    info: []
+                },
+                data_portal: {
+                    info: []
+                },
+            },
+            user: ''
+        },
+        methods: {
+            getLocalTime(nS) {
+                var date = new Date(parseInt(nS)).toLocaleString();
+                return date;
+            },
+            dataSetDeleteFile(fileName, index) {
+                let _this = this;
+                Vue.delete(this.panels.data_set.info, index);
+
+                let data = {
+                    fileName
+                };
+                let url = url_root + "hadoop/get.json?method=delete";
+                $.ajax({
+                    type: "POST",
+                    url,
+                    data,
+                    dataType: "JSON",
+                    xhrFields: {withCredentials: true},
+                    crossDomain: true,
+                    success: function (response) {
+                        _this.successHandleWay(response);
+                    },
+                    error: function (response) {
+                        var js = JSON.stringify(response);
+                        alert("error:" + js);
+
+                        //后台反馈数据必须json格式的字符串
+                    }
+                });
+            },
+            instrumentPanelDeleteFile(boardname, index, panel = "instrument_panel") {
+                let _this = this;
+                Vue.delete(this.panels[panel].info, index);
+
+                let data = {
+                    boardname,
+                };
+                let url = url_root + "dashboard/boardaction.json?method=delete";
+                $.ajax({
+                    type: "POST",
+                    url,
+                    data,
+                    dataType: "JSON",
+                    xhrFields: {withCredentials: true},
+                    crossDomain: true,
+                    success: function (response) {
+                        _this.successHandleWay(response);
+                    },
+                    error: function (response) {
+                        console.log(response);
+                    }
+                });
+            },
+            injectPanelData() {
+                let _this = this;
+
+                 if (this.showPanel === 'data_set') {
+                    $.ajax({
+                        type: "POST",
+                        url: url_root + "hadoop/get.json?method=list",
+                        dataType: "JSON",
+                        xhrFields: {withCredentials: true},
+                        crossDomain: true,
+                        success: function (response) {
+
+                            if (response.message === 'Success') {
+                                console.log(response);
+                                _this.panels.data_set.info = response.data;
+                                if (response.data[0] && response.data[0].user) {
+                                    _this.user = response.data[0].user;
+                                }
+                            } else {
+                                _this.otherMessageHandle(response)
+                            }
+
+                        },
+                        error: function (response) {
+                            var js = JSON.stringify(response);
+                            alert("error:" + js);
+                        }
+                    });
+                } else if(this.showPanel === 'instrument_panel') {
+                    //instrument_panel
+                    $.ajax({
+                        type: "POST",
+                        url: url_root + "dashboard/list.json?method=board",
+                        dataType: "JSON",
+                        xhrFields: {withCredentials: true},
+                        crossDomain: true,
+                        success: function (response) {
+
+                            if (response.message === 'Success') {
+                                _this.panels.instrument_panel.info = response.data
+                                if (response.user) {
+                                    _this.user = response.user;
+                                }
+                            } else {
+                                _this.otherMessageHandle(response);
+                            }
+
+                        },
+                        error: function (response) {
+                            var js = JSON.stringify(response);
+                            alert("error:" + js);
+
+                            //后台反馈数据必须json格式的字符串
+                        }
+                    });
+
+                }else {
+                     // data_portal
+                     $.ajax({
+                         type: "POST",
+                         url: url_root + "dashboard/list.json?method=portal",
+                         dataType: "JSON",
+                         xhrFields: {withCredentials: true},
+                         crossDomain: true,
+                         success: function (response) {
+                                console.log(response);
+                             if (response.message === 'Success') {
+                                 _this.panels.data_portal.info = response.data
+                                 if (response.user) {
+                                     _this.user = response.user;
+                                 }
+                             } else {
+                                 _this.otherMessageHandle(response);
+                             }
+
+                         },
+                         error: function (response) {
+                             var js = JSON.stringify(response);
+                             alert("error:" + js);
+
+                             //后台反馈数据必须json格式的字符串
+                         }
+                     });
+                }
+
+            },
+            updateLocalFile() {
+                let _this = this;
+                let formData = new FormData();
+                let file = $('#updateLocalFile')[0].files[0];
+
+                formData.append('file', file);
+                let rename = $('#localFileRename').val();
+                if (!rename) {
+                    rename = $('#updateLocalFile')[0].files[0].name;
+                    //去文件后缀名
+                    let suffix = rename.replace(/.+\./, "");
+                    rename = rename.replace('.' + suffix, '');
+                }
+                formData.append('rename', rename);
+
+                $.ajax({
+                    type: 'POST',
+                    url: url_root + 'hadoop/uploadfile',
+                    data: formData,
+                    dataType: "JSON",
+                    xhrFields: {withCredentials: true},
+                    crossDomain: true,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        _this.successHandleWay(response);
+                    },
+                    error: function (response) {
+                        console.log(response);
+                    }
+                });
+                //清除输入框内已选文件
+                $('#updateLocalFile').val('');
+            },
+            addDashBoard(e) {
+
+                let _this = this;
+                let boardname = $('#newDashBoardName').val();
+                if (boardname) {
+                    $.ajax({
+                        url: url_root + "dashboard/boardaction.json?method=add",
+                        data: {
+                            boardname,
+                            boardinfo: '',
+                            timestemp: new Date().getTime()
+                        },
+                        dataType: 'JSON',
+                        xhrFields: {withCredentials: true},
+                        crossDomain: true,
+                        success: function (response) {
+                              _this.successHandleWay(response);
+                        },
+                        error: function (response) {
+                            console.log(response)
+                        }
+                    });
+                    // 触发关闭按钮，退出输入框
+                    $(e.currentTarget).prevAll('button').click()
+                    $('#newDashBoardName').val('');
+                }
+
+            },
+            enterDashBoard(boardname) {
+                window.open("./echartsControl.html?boardname=" + boardname);
+            },
+            successHandleWay(response) {
+                if (response.message === "Success") {
+                    //更新panel数据
+                    this.injectPanelData();
+                } else {
+                    this.otherMessageHandle(response)
+                }
+            },
+            otherMessageHandle(response) {
+                if (response.message === 'Login') {
+                    //返回登陆界面
+                    let preUrl = window.location.href;
+                    let loginUrl = "./index.html";
+                    window.location.href = loginUrl+"?preUrl="+preUrl;
+                }
+            }
+        },
+        watch: {
+            showPanel: function () {
+                this.injectPanelData();
+            }
+        },
+        created() {
+            this.injectPanelData();
+        }
+    })
+</script>
+</html>

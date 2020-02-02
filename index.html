@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/vue.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body{
+            display: flex;
+            font-family: "Segoe UI",Segoe,Tahoma,Arial,Verdana,sans-serif;
+            letter-spacing: 0.5px;
+            align-items:center;
+        }
+
+        a{
+            text-decoration: none!important;
+        }
+        .container{
+
+            width:70%;
+            justify-content: center;
+            display: flex;
+            margin: 0 auto;
+            /*background-color: rgba(10, 10, 10, 0.77);*/
+            /*border: 2px solid rgba(280, 280, 280, 1);*/
+            border-radius: 5px;
+            /*box-shadow: 0 -5px 10px 1px rgba(16, 16, 16,0.2);*/
+        }
+        .left_part{
+            height: 100%;
+            width: 50%;
+        }
+
+        .right_part{
+            width: 50%;
+            height: 100%;
+            flex-basis: 500px;min-height: 500px;
+            padding-top: 1px;
+            padding-left: 30px;
+            /*border-top: 2px solid rgba(10, 10, 10, 0.93);*/
+        }
+
+        button{
+            font-weight: 400;
+            line-height: 1.42;
+            position: relative;
+            cursor: pointer;
+            -webkit-transition: all;
+            transition: all;
+            -webkit-transition-timing-function: linear;
+            transition-timing-function: linear;
+            -webkit-transition-duration: .2s;
+            transition-duration: .2s;
+            text-align: center;
+            vertical-align: top;
+            white-space: nowrap;
+            color: #333;
+            border: 1px solid rgba(10,10,10, .9);
+            border-radius: 3px;
+            background-color: #ffffff;
+            background-clip: padding-box;
+            color: rgba(10,10,10, .9);
+            font-size: 18px;
+            display: block;
+            width: 97%;
+            padding: 13px 0;
+        }
+
+
+        h1{
+            font-size: 35px;
+            text-align: left;
+            color: #000000;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 93.4%;
+            margin-bottom: 20px;
+            padding: 10px;
+            float: left;
+            background-color: transparent;
+            border: none;
+            font-size: 18px!important;
+            border-bottom: 1px solid rgba(10,10,10,.9);
+            outline: none;
+            color: #000000;
+        }
+        .button1{
+            margin-top:30px;
+            margin-bottom:30px;
+        }
+        .button2{
+            background-color: #000000;
+        }
+        /*.left_part{*/
+        /*width: 50%;*/
+        /*background: url(../assets/img/login_bg2.jpg);*/
+        /*background-repeat: no-repeat;*/
+        /*background-attachment: fixed;*/
+        /*background-position: center;*/
+        /*background-size: 30%;*/
+        /*-webkit-background-size: cover;*/
+        /*-moz-background-size: cover;*/
+        /*-o-background-size: cover;*/
+        /*}*/
+        .clearfix::before,.clearfix::after{
+            content: " ";
+            display: table;
+        }
+        .clearfix::after{
+            clear: both;
+        }
+        [v-cloack]{
+            display: none;
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity .5s;
+        }
+
+        .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */
+        {
+            opacity: 0;
+        }
+        .card {
+            box-sizing: border-box;
+            position: absolute;
+            padding: 5px 100px;
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            min-width: 0;
+            word-wrap: break-word;
+            background-color: #fff;
+            background-clip: border-box;
+            border: 1px solid rgba(0, 0, 0, .125);
+            border-radius: .25rem;
+        }
+        .text-white {
+            color: #fff!important;
+        }
+        .bg-warning {
+            background-color: #ffc107!important;
+        }
+        .bg-danger{
+            background-color: #dc3545!important;
+        }
+        .bg-success {
+            background-color: #28a745!important;
+        }
+        @media screen and (max-width: 850px) {
+            .left_part {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="all" class="container">
+
+        <transition name="fade" v-cloak>
+            <div v-show="alertBox.show" class="card  text-white alertBox" :class="alertBox.class">{{alertBox.text}}</div>
+        </transition>
+
+        <div class="left_part">
+          <img src="img/login_bg3.jpg" style="width: 100%;flex-basis: 500px;min-height: 500px;">
+        </div>
+        <div v-if="state === 'login'" id="login" key="login" class="right_part">
+            <div style="border-top:3px solid #111111;border-top:3px solid #111111;height: 6px;width:60px; "></div>
+            <h1>VISUALIZATION</h1>
+            <h1>融创软通</h1><br/>
+            <form class="input-group" method="post">
+                <div class="input-row" >
+                    <label>账号</label>
+                    <input name="u_username" v-model="login.u_username" type="text"  placeholder="" class="clearfix">
+                </div>
+                <div class="input-row " >
+                    <label>密码</label>
+                    <input name="u_password" v-model="login.u_password" type="password"  placeholder="" style="margin-bottom: 54px;" class="clearfix">
+                </div>
+                <span id="notice" style="height:30px;font-size: 12px;color:gray;"></span>
+                <button @click="ajaxLogin()" class="button1" style="margin-top:180px;"  type="button"><a href="javascript:void(0);" style="color:#000000;cursor: pointer;">登录</a></button>
+                <a @click="state = 'register'" href="javascript:void(0);" style="cursor: pointer;float: right;">注册</a>
+            </form>
+        </div>
+        <div v-else :key="register" id="register" class="right_part">
+          <div style="border-top:3px solid #111111;border-top:3px solid #111111;height: 6px;width:60px; "></div>
+          <h1>VISUALIZATION</h1>
+          <h1>融创软通</h1><br/>
+          <form  class="input-group" method="post">
+            <div class="input-row" >
+              <label>手机</label>
+              <input name="u_username" v-model="register.u_username" type="text"  placeholder="" class="clearfix">
+            </div>
+            <div class="input-row" >
+              <label>昵称</label>
+              <input name="u_nickname"  v-model="register.u_nickname" type="text"  placeholder="" class="clearfix">
+            </div>
+            <div class="input-row " >
+              <label>密码</label>
+              <input name="u_password" v-model="register.u_password" type="password"  placeholder="" style="margin-bottom: 54px;" class="clearfix">
+            </div>
+            <button @click="ajaxRegister()" class="button1" type="button"><a href="javascript:void(0);" style="color:#000000;cursor: pointer;">注册</a></button>
+              <a @click="state = 'login'" href="javascript:void(0);" style="cursor: pointer; float: right;">登陆</a>
+          </form>
+        </div>
+    </div>
+</body>
+<script>
+    url_root = "http://bi.lllhy.com/";
+    new Vue({
+        el: '#all',
+       data:{
+           alertBox: {
+               show: false,
+               class: "",
+               text: ""
+           },
+           state: 'login',
+           login:{
+               u_username: '',
+               u_password: ''
+           },
+           register:{
+               u_username: '',
+               u_nickname: '',
+               u_password: '',
+
+           }
+       },
+        methods:{
+            ajaxLogin(){
+                let _this = this;
+                let login = this.login;
+
+                if(login.u_username.length !== 11){
+                    _this.alertBox.show = true;
+                    _this.alertBox.class = 'bg-danger';
+                    let text = '账号不规范';
+                    _this.alertBox.text = text;
+                    $('#login').find("input[name='u_username']").focus();
+                    return;
+                }else if(!login.u_password){
+                    _this.alertBox.show = true;
+                    _this.alertBox.class = 'bg-danger';
+                    let text = '密码不能为空';
+                    _this.alertBox.text = text;
+                    $('#login').find("input[name='u_password']").focus();
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: url_root+"user/login",
+                    data: {
+                        "u_username": this.login.u_username,
+                        "u_password": this.login.u_password
+                    },
+                    dataType: "JSON",
+                    xhrFields: {withCredentials: true},
+                    crossDomain: true,
+                    success: function (response) {
+
+                        if(response.message === "Success" ){
+
+                            let locationHref = window.location.href;
+                            let preUrl = locationHref.split('preUrl=')[1];
+                            window.location.href = preUrl? preUrl : './dataPortal.html';
+
+                        }else if(response.message === "Fail" ){
+                            _this.alertBox.show = true;
+                            _this.alertBox.class = 'bg-danger';
+                            let text = '密码错误 或 账号未注册';
+                            _this.alertBox.text = text;
+
+                        }
+
+                    },
+                    error: function (data) {
+                        var js = JSON.stringify(data);
+                    }
+                });
+            },
+            ajaxRegister(){
+                let _this = this;
+                let register= this.register;
+
+                if(register.u_username.length !== 11){
+                    _this.alertBox.show = true;
+                    _this.alertBox.class = 'bg-danger';
+                    let text = '账号不规范';
+                    _this.alertBox.text = text;
+                    $('#register').find("input[name='u_username']").focus();
+                    return;
+                }else if(!register.u_nickname){
+                    _this.alertBox.show = true;
+                    _this.alertBox.class = 'bg-danger';
+                    let text = '昵称不能为空';
+                    _this.alertBox.text = text;
+                    $('#register').find("input[name='u_nickname']").focus();
+                    return;
+                }else if(!register.u_password){
+                    _this.alertBox.show = true;
+                    _this.alertBox.class = 'bg-danger';
+                    let text = '密码不能为空';
+                    _this.alertBox.text = text;
+                    $('#register').find("input[name='u_password']").focus();
+                    return;
+                }
+                //注册
+                $.ajax({
+                    type: "POST",
+                    url: url_root+"user/register",
+                    data: {
+                        "u_username": this.register.u_username,
+                        "u_nickname": this.register.u_nickname,
+                        "u_password": this.register.u_password
+                    },
+                    dataType: "JSON",
+                    xhrFields: {withCredentials: true},
+                    crossDomain: true,
+                    success: function (response) {
+                        if(response.message === 'Success'){
+                            _this.alertBox.show = true;
+                            _this.alertBox.class = 'bg-success';
+                            let text = '注册成功, 即将跳转登陆界面...';
+                            _this.alertBox.text = text;
+                            setTimeout(()=>{
+                                _this.state = 'login';
+                            },1000);
+
+                        }else if(response.message === 'Exist'){
+                            _this.alertBox.show = true;
+                            _this.alertBox.class = 'bg-warning';
+                            let text = '账号已存在';
+                            _this.alertBox.text = text;
+
+                        }else if(response.message === 'Fail'){
+                            _this.alertBox.show = true;
+                            _this.alertBox.class = 'bg-success';
+                            let text = '抱歉服务器故障';
+                            _this.alertBox.text = text;
+                        }
+
+                    },
+                    error: function (data) {
+                        var js = JSON.stringify(data);
+                        alert("error:" + js);
+                    }
+                });
+            },
+            checkBasicFormat(){
+
+            }
+        },
+        watch:{
+            'alertBox.show': function (val) {
+                if(val === true){
+                    setTimeout(()=>{
+                        this.alertBox.show = false;
+                    }, 1000);
+                }
+            }
+        }
+    });
+
+
+</script>
+</html>

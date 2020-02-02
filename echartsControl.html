@@ -1,0 +1,3731 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+    <!--<meta charset="UTF-8">-->
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"
+          charset="UTF-8"/>
+    <title>南京某段时间天气情况</title>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/echarts.common.min.js" type="text/javascript"></script>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-colorpicker.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/font_1038051_8ne0kzpnat.css"/>
+    <link rel="stylesheet" type="text/css" href="css/dashboardLive.css">
+    <link rel="stylesheet" href="css/main.css">
+
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.min.js"></script>
+
+    <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+    <script src="js/bootstrap-colorpicker.js"></script>
+
+    <script src="js/ajax.js"></script>
+    <script src="js/app.min.js"></script>
+    <script src="js/clipboard.min.js"></script>
+
+
+</head>
+<body>
+
+
+<div id="all" v-cloak>
+
+    <!--提示框-->
+    <transition name="fade" v-cloak>
+        <div v-show="alertBox.show" class="card  text-white alertBox" :class="alertBox.class" >{{alertBox.text}}</div>
+    </transition>
+    <!--sharePortal-->
+    <div class="modal fade" id="shareModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- 模态框头部 -->
+                <div class="modal-header">
+                    <h4 class="modal-title">生成链接地址</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- 模态框主体 -->
+                <div class="modal-body">
+                    <!-- Target -->
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" >名字：</span>
+                        </div>
+                        <input id="portalname" class="form-control" type="text" placeholder="请输入名字">
+                    </div>
+
+                    <button  @click="sharePortal()" type="button" class="btn btn-secondary" style=" margin: 10px 0;width: 100%;">生成链接</button>
+
+                    <input id="foo" class="form-control" readonly="readonly"
+                           value="">
+
+
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="modal-footer">
+                    <!-- Trigger -->
+                    <button type="button" @click="copyClean()" class="btn btn-secondary" data-clipboard-target="#foo"
+                            data-dismiss="modal">
+                        复制链接
+                    </button>
+
+                    <!--<button  class="btn" >关闭</button>-->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--顶部栏-->
+    <header>
+        <div class="header-container">
+            <div class="header-left">
+                <div class="arrow-wrap">
+                    <a href="./dataPortal.html" ><i class="iconfont icon-fanhui"></i></a>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-right-ul">
+                    <ul class="edit-tip">
+                        <li class="edit-tip-icon">
+                            <a href="javascript:void(0);">
+                                <nz-tooltip>
+                                    <img  data-toggle="modal" data-target="#shareModal"
+                                         src="img/share.svg" style="width: 21px;top: -5px;position: relative;">
+                                    <i class="iconfont icon-shezhi">
+                                    </i>
+                                </nz-tooltip>
+
+                            </a>
+                        </li>
+                        <li class="operate-lg">
+                            <a class="operate-items" style="height: 28px;"
+                               @click="mode = mode==='edit'? 'preview': 'edit'">
+                                <span class="empty"></span>
+                                <span class="curor">
+                      <span class="edit">编辑</span>
+                      <span class="save">预览</span>
+                    </span>
+                            </a>
+                        </li>
+                        <li class="edit-tip-icon">
+                            <a  class="data-portals"  @click="saveTheDashboard()">
+                                <!--<a href="#" class="data-portals" data-toggle="modal" data-target="#myModal">-->
+                                <nz-tooltip>
+                                    <i class="iconfont icon-cunchupitchon">
+                                    </i>
+                                </nz-tooltip>
+                            </a>
+                        </li>
+                        <li class="operate-sm">
+                            <a class="operate-items">
+                                <span class="empty"></span>
+                                <span class="curor"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <div class="workplace">
+        <div class="wrapper">
+            <div class="left-page">
+                <div class="left-icons">
+                    <div class="left-icons-container">
+                        <ul class="chart-list1">
+                            <li class="chart-list"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-chaxun"></i></a></li>
+                            <li class="chart-list"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fuwenbenkuang"></i></a></li>
+                            <li class="chart-list"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-lianjie"></i></a></li>
+                            <li class="chart-list"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-biaoge"></i></a></li>
+                            <li class="chart-list"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-tupian"></i></a></li>
+                        </ul>
+                        <ul class="chart-list2">
+                            <li class="chart-list-box" @click="addChart('chartLine')"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_zhexiantu"></i></a></li>
+                            <li class="chart-list-box" @click="addChart('chartBar')"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_zhuzhuangtu1"></i></a></li>
+                            <li class="chart-list-box" @click="addChart('chartPie')"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_bingtu1"></i></a></li>
+                            <li class="chart-list-box"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_biaoge"></i></a></li>
+                            <li class="chart-list-box"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_ditu"></i></a></li>
+                            <li class="chart-list-box"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_leidatu"></i></a></li>
+                            <li class="chart-list-box"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_loudoutu"></i></a></li>
+                            <li class="chart-list-box"><a href="javascript:void(0);"><i
+                                    class="iconfont icon-fsux_tubiao_ciyun"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!--左侧图表 -->
+                <div class="leftbox" @click.self="whichChart = ''">
+
+                    <!--<div v-for="chart in  charts" class="chart-bigBox" >-->
+
+                    <vue-draggable-resizable v-for="chart in  charts" :ref="chart.id" :key="chart.id" class="chart-bigBox "
+                                             :class="chart.id == whichChart? 'checked': 'uncheck'"
+                                             :parent='true' :grid="[10,10]"
+                                             :w="400" :h="300"
+                    @resizing="onResize" @dragging="onDrag" :drag-cancel="'.cancel'">
+                        <!--:x="chart.others.dragResize.x"-->
+                        <!--:y="chart.others.dragResize.y"-->
+                        <!--@resizing="onResize" @dragging="onDrag" :drag-cancel="'canvas'">-->
+                        <div :class="['chartBox',{'cancel': dragCancel }]"
+                             @click="checked">
+
+                            <div :id="chart.id" class="chart-box "></div>
+                            <div v-if="!chart.others"
+                                 class="['gray-lid']">缺少维度和度量，请添加
+                            </div>
+                            <div v-else-if="chart.others.lidText" class="gray-lid ">{{chart.others.lidText}}
+                            </div>
+
+                            <bs-dropdown :id="chart.id" :which-chart="whichChart" :charts="charts"></bs-dropdown>
+                        </div>
+                    </vue-draggable-resizable>
+                    <!--</div>-->
+
+
+                </div>
+                <!--<div class="drag-container">-->
+                <!--<div class="drag-area">-->
+                <!--<div class="gridster">-->
+                <!--<div class="gridster-container" style="height: 300px; width: 876px;">-->
+                <!---->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+            </div>
+            <div class="right-page">
+                <div class="right-page-container">
+                    <span class="header-box">图表设计</span>
+
+                    <!--右侧控制面板start-->
+                    <div id="rightbox" class="rightbox">
+                        <!--分页-->
+                        <div class="panels-box">
+                            <div v-for="panel in panels" @click="currentPanel = panel.name"
+                                 :key="panel.name"
+                                 :class="['panel-select',{ 'bg-gray-self': currentPanel == panel.name }]">
+                                {{panel.text}}
+                            </div>
+                        </div>
+                        <!--数据页面-->
+                        <div class="panel " v-show="currentPanel == 'data'">
+
+                            <div class="card-header bg-gray-self text-white">
+                                值轴/度量
+                            </div>
+                            <div class="bg-darkblue-self"
+                                 style="position: relative;
+                            color: white;
+                            padding: 12px 5px 0px;
+                            height: calc(100% - 30px);" id="dataset">
+                                <div class="input-group">
+                                    <label>数据集：</label>
+                                    <select v-model="dataset.whichDataset" class="input-long-self">
+                                        <option v-for="name in  aFilesName" :value="name">{{name}}</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <div class="areaBox">
+                                        维度：
+                                        <span class="vd-big-box">
+                                            <span class="vd-box v-box" v-for="name in dataset.checked.demension">
+                                                {{name}}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="areaBox">
+                                        度量：
+                                        <span class="vd-big-box">
+
+                                            <span class="vd-box d-box" v-for="(name,index) in dataset.checked.measure">
+                                               {{name}}
+                                                <select v-model="dataset.measureComputeWay[name]">
+                                                     <option v-for="(cn,en) in measureComputeWay"
+                                                             :value="en">{{cn}}</option>
+                                                </select>
+                                            </span>
+
+                                        </span>
+                                    </div>
+                                </div>
+
+
+                                <div style="display: flex">
+                                    <div class="areaBoxOne">
+                                        维度：
+                                        <div style="overflow-y:auto;height: 168px;">
+                                            <div v-for="(order, name) in dataset.demensions">
+                                                <input type="checkbox" :value="name" :id="name"
+                                                       v-model="dataset.checked.demension">
+                                                <label :for="name">{{name}} </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="areaBoxOne">
+                                        度量：
+                                        <div style="overflow-y:auto;height: 168px;">
+                                            <div v-for="(order, name) in  dataset.measures">
+                                                <input type="checkbox" :value="name" :id="name"
+                                                       v-model="dataset.checked.measure">
+                                                <label :for="name">{{name}} </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="position:absolute;width: 100%;height: 51px;bottom: 0;left:0;">
+                                    <div class="input-group" style="margin-bottom:5px">
+                                        <label>预览行数</label>
+                                        <input style="margin-left: 15px;width: 60%;" type="number" min="1"
+                                               v-model="dataset.previewRows"/>
+                                    </div>
+                                    <button type="button" class="btn-info" style="width: 100%;height: 30px;"
+                                            v-on:click="ajaxUpdate">
+                                        更新
+                                    </button>
+                                </div>
+
+
+                                <!--方案二-->
+                                <!--维度：-->
+                                <!--<template v-for="dimension in dataset.demensions">-->
+                                <!--<input type="checkbox" :value="dimension" :id="dimension" v-model="dataset.checked.demension">-->
+                                <!--<label :for="dimension">{{dimension}} </label>-->
+                                <!--</template>-->
+                                <!--</br>-->
+                                <!--度量：-->
+                                <!--<template v-for="measure in dataset.measures">-->
+                                <!--<input type="checkbox" :value="measure" :id="measure" v-model="dataset.checked.measure">-->
+                                <!--<label :for="measure">{{measure}} </label>-->
+                                <!--</template>-->
+
+                                <!--使计算属性生效-->
+                                {{computedGrid}}{{computedNameGap}}{{computedLegendPosition}}
+                                <!--柱图-->
+                                {{radius}}
+                            </div>
+
+                        </div>
+                        <!--样式-->
+                        <div class="panel" v-show="currentPanel == 'style'">
+                            <!--手风琴特效-->
+                            <div class="container bg-transparent">
+
+                                <!--通用配置-->
+                                <div class="card text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="card-link text-white " data-toggle="collapse" href="#collapseOne">
+                                            通用配置
+                                        </a>
+                                    </div>
+                                    <div id="collapseOne" class="collapse show bg-darkblue-self">
+                                        <div class="card-body">
+                                            <!--标题-->
+                                            <div style="display: flex;flex-wrap: nowrap;">
+
+                                                <!--<label for="title">title:</label>-->
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span for="title" class="input-group-text">title:</span>
+                                                        <div class="input-group-text">
+                                                            <input id="title" type="checkbox"
+                                                                   v-model="option.title.show"
+                                                                   style="width: 20px;height: 20px;">
+                                                        </div>
+                                                    </div>
+                                                    <input type="text" class="form-control" style="height: 100%;"
+                                                           v-model="option.title.text"
+                                                           :disabled="!option.title.show">
+                                                    <div class="input-group-append">
+                                                        <color-picker _id="title-color"
+                                                                      :target="option.title.textStyle"></color-picker>
+                                                    </div>
+                                                </div>
+                                                <!--<div class="input-group mb-3">-->
+                                                <!--<div class="input-group-prepend">-->
+                                                <!--<div class="input-group-text"-->
+                                                <!--style="padding: 8px;height: 38px;">-->
+                                                <!--<input id="title" type="checkbox"-->
+                                                <!--v-model="option.title.show"-->
+                                                <!--style="width: 20px;height: 20px;">-->
+                                                <!--</div>-->
+                                                <!--</div>-->
+                                                <!--<label>-->
+                                                <!--<input type="text" class="form-control"-->
+                                                <!--v-model="option.title.text"-->
+                                                <!--:disabled="!option.title.show">-->
+                                                <!--</label>-->
+                                                <!--<color-picker _id="title-color"-->
+                                                <!--:target="option.title.textStyle"></color-picker>-->
+                                                <!--</div>-->
+                                            </div>
+
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">副标题:</span>
+                                                </div>
+                                                <input class="form-control" id="subtext"
+                                                       v-model="option.title.subtext"/>
+                                            </div>
+                                            <!--<label for="subtext">副标题:</label>-->
+                                            <!--<input id="subtext" v-model="option.title.subtext"/>-->
+                                            <!--<br>-->
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">副标题链接:</span>
+                                                </div>
+                                                <input id="sublink" class="form-control"
+                                                       v-model="option.title.sublink"/>
+                                            </div>
+                                            <!--<label for="sublink">副标题链接:</label>-->
+                                            <!--<input id="sublink" v-model="option.title.sublink"/>-->
+                                            <!--<br>-->
+                                            <!--<div v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">-->
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">背景:</span>
+                                                </div>
+                                                <select class="form-control" id="backgroundColor"
+                                                        v-model="option.backgroundColor">
+                                                    <option value="#ffffff" selected>纯白色</option>
+                                                    <option value="#f3f3f3">浅色系</option>
+                                                    <option value="#073358">深色系</option>
+                                                </select>
+                                            </div>
+                                            <!--<div>-->
+                                            <!--<label for="backgroundColor">背景:</label>-->
+                                            <!--<select id="backgroundColor" v-model="option.backgroundColor">-->
+                                            <!--<option value="#ffffff" selected>纯白色</option>-->
+                                            <!--<option value="#f3f3f3">浅色系</option>-->
+                                            <!--<option value="#073358">深色系</option>-->
+                                            <!--</select>-->
+                                            <!--</div>-->
+
+                                            <!--图表类型-->
+                                            <div class="input-group"
+                                                 v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">图表类型:</span>
+                                                </div>
+                                                <select class="form-control" id="type" v-model="others.chartType">
+                                                    <option value="{areaStyle: '', stack: ''}"
+                                                            selected>线图
+                                                    </option>
+                                                    <option value="{areaStyle: '', stack: '总量'}">堆积线图</option>
+                                                    <option value="{areaStyle: {}, stack: ''}">面积图</option>
+                                                    <option value="{areaStyle: {}, stack: '总量'}">堆积面积图</option>
+                                                    <!--<option value="">百分比堆积图</option>-->
+                                                </select>
+                                            </div>
+                                            <!--<div v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">-->
+                                            <!--<label for="type">图表类型:</label>-->
+                                            <!--<select id="type" v-model="others.chartType">-->
+                                            <!--<option value="{areaStyle: '', stack: ''}"-->
+                                            <!--selected>线图-->
+                                            <!--</option>-->
+                                            <!--<option value="{areaStyle: '', stack: '总量'}">堆积线图</option>-->
+                                            <!--<option value="{areaStyle: {}, stack: ''}">面积图</option>-->
+                                            <!--<option value="{areaStyle: {}, stack: '总量'}">堆积面积图</option>-->
+                                            <!--&lt;!&ndash;<option value="">百分比堆积图</option>&ndash;&gt;-->
+                                            <!--</select>-->
+                                            <!--</div>-->
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--样式-->
+                                <div v-if="this.option.series[0].type !== 'pie'"
+                                     class="card  text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="collapsed card-link text-white " data-toggle="collapse"
+                                           href="#collapseTwo">
+                                            样式
+                                        </a>
+                                    </div>
+                                    <div id="collapseTwo" class="collapse show bg-darkblue-self">
+                                        <div class="card-body">
+                                            <!--样式-->
+                                            <div class="mb-3" v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">
+                                                <label>显示缩略图:</label>
+                                                <!--<div class="input-group-prepend" style="margin: 0 20px">-->
+                                                <!--<div class="input-group-text">-->
+                                                <!--<input name="slt" type="radio" :value="true"-->
+                                                <!--v-model="option.dataZoom[0].show">-->
+                                                <!--</div>-->
+                                                <!--<label>显示</label>-->
+                                                <!--<div class="input-group-text" style="margin: 0 20px">-->
+                                                <!--<input name="slt" type="radio" :value="false"-->
+                                                <!--v-model="option.dataZoom[0].show">-->
+                                                <!--</div>-->
+                                                <!--<label>不显示</label>-->
+                                                <!--</div>-->
+                                                <div class="input-group ">
+                                                    <label for="showTrue" class="radio-inline"
+                                                           style="margin-right: 90px;">
+                                                        <input id="showTrue" name="slt" type="radio" :value="true"
+                                                               v-model="option.dataZoom[0].show">
+                                                        显示
+                                                    </label>
+                                                    <label for="showFalse" class="radio-inline">
+                                                        <input id="showFalse" name="slt" type="radio" :value="false"
+                                                               v-model="option.dataZoom[0].show">
+                                                        不显示
+                                                    </label>
+                                                </div>
+
+                                            </div>
+
+
+                                            <!--是否显示双y轴-->
+                                            <!--<div v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">-->
+                                            <!--<input id="doubleY" type="checkbox" v-model="others.doubleYAxis"-->
+                                            <!--:disabled="option.series.length < 2"/>-->
+                                            <!--<label for="doubleY">是否显示双y轴</label>-->
+                                            <!--</div>-->
+                                            <div class="input-group mb-3"
+                                                 v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input id="doubleY" type="checkbox" v-model="others.doubleYAxis"
+                                                               :disabled="option.series.length < 2"/>
+                                                    </div>
+                                                </div>
+                                                <label for="doubleY" class="input-group-text input-group-append">
+                                                    是否显示双y轴
+                                                </label>
+                                            </div>
+
+                                            <!--线条是否呈曲线-->
+                                            <!--<div v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">-->
+                                            <!--<div class="input-group-prepend" style="margin: 0 20px;float:left;">-->
+                                            <!--<div class="input-group-text">-->
+                                            <!--<input id="quxian" name="quxian" type="checkbox"-->
+                                            <!--v-model="others.quxian">-->
+                                            <!--</div>-->
+                                            <!--</div>-->
+                                            <!--<label for="quxian">显示曲线</label>-->
+                                            <!--</div>-->
+                                            <div class="input-group mb-3"
+                                                 v-if="chartTYPE === 'line' || chartTYPE === 'bar' ">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input id="quxian" name="quxian" type="checkbox"
+                                                               v-model="others.quxian">
+                                                    </div>
+                                                </div>
+                                                <label for="quxian" class="input-group-text input-group-append">
+                                                    是否显示曲线
+                                                </label>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--布局-->
+                                <div class="card text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="collapsed card-link text-white " data-toggle="collapse"
+                                           href="#collapseThree">
+                                            布局
+                                        </a>
+                                    </div>
+                                    <div id="collapseThree" class="collapse show bg-darkblue-self">
+                                        <div class="card-body">
+
+                                            <!--图例的有无与位置-->
+                                            <!--<div>-->
+                                            <!--<label for="tuli">显示图例：</label>-->
+                                            <!--<select id="tuli" v-model="others.tuliPosition">-->
+                                            <!--<option value="null">无</option>-->
+                                            <!--<option value="top">上</option>-->
+                                            <!--<option value="bottom">下</option>-->
+                                            <!--<option value="left">左</option>-->
+                                            <!--<option selected value="right">右</option>-->
+                                            <!--</select>-->
+                                            <!--</div>-->
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <label for="tuli" class="input-group-text">
+                                                        显示图例：
+                                                    </label>
+                                                </div>
+                                                <select id="tuli" class="form-control input-group-append"
+                                                        v-model="others.tuliPosition">
+                                                    <option value="null">无</option>
+                                                    <option value="top">上</option>
+                                                    <option value="bottom">下</option>
+                                                    <option value="left">左</option>
+                                                    <option selected value="right">右</option>
+                                                </select>
+                                            </div>
+
+
+                                            <!--是否显示数据标签-->
+                                            <!--<div v-if="chartTYPE === 'line'|| chartTYPE === 'bar'">-->
+                                            <!--<input id="dataLabel" type="checkbox" v-model="others.dataLabel"/>-->
+                                            <!--<label for="dataLabel">是否显示数据标签</label>-->
+                                            <!--</div>-->
+                                            <div class="input-group mb-3"
+                                                 v-if="chartTYPE === 'line'|| chartTYPE === 'bar'">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                          <input id="dataLabel" type="checkbox"
+                                                                 v-model="others.dataLabel"/>
+                                                    </span>
+                                                </div>
+                                                <div class="input-group-append">
+                                                    <label for="dataLabel" class=" input-group-text">
+                                                        是否显示数据标签
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!--tooltip是否显示-->
+                                            <!--<div>-->
+                                            <!--<div class="input-group-prepend" style="margin: 0 20px;float:left;">-->
+                                            <!--<div class="input-group-text">-->
+                                            <!--<input id="tooltip" name="tooltip" type="checkbox"-->
+                                            <!--v-model="option.tooltip.show">-->
+                                            <!--</div>-->
+                                            <!--</div>-->
+                                            <!--<label for="tooltip">显示Tooltip</label>-->
+                                            <!--</div>-->
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                           <input id="tooltip" name="tooltip" type="checkbox"
+                                                                  v-model="option.tooltip.show">
+                                                    </span>
+                                                </div>
+                                                <div class="input-group-append">
+                                                    <label for="tooltip" class="input-group-text">
+                                                        是否显示Tooltip
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div v-if="chartTYPE === 'pie'">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <label class="input-group-text">显示模式</label>
+                                                    </div>
+                                                    <select class="input-group-append form-control"
+                                                            v-model="others.radius">
+                                                        <option :value="[0 , '60%']">默认</option>
+                                                        <option :value="['40%', '60%']">空心</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <label class="input-group-text">标签样式</label>
+                                                    </div>
+                                                    <select class="input-group-append form-control"
+                                                            v-model="option.series[0].label.formatter">
+                                                        <option value="">关闭</option>
+                                                        <option value="({b})  {d}%">标题, 百分比</option>
+                                                        <option value="({b})  {c} ({d}%)">标题，值(百分比)</option>
+                                                        <option value="{b}">标题</option>
+                                                        <option value="({b})  {c}">标题, 值</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label>标签引线</label>
+                                                    <div class="input-group">
+                                                        <label for="pieLabelLineShow1" class="radio-inline"
+                                                               style="margin-right: 90px;">
+                                                            <input id="pieLabelLineShow1"
+                                                                   type="radio"
+                                                                   v-model="option.series[0].labelLine.show"
+                                                                   :value="true"/>
+                                                            显示
+                                                        </label>
+                                                        <label for="pieLabelLineShow0" class="radio-inline">
+                                                            <input id="pieLabelLineShow0"
+                                                                   type="radio"
+                                                                   v-model="option.series[0].labelLine.show"
+                                                                   :value="false"/>
+                                                            显示
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!--<div class="input-group ">-->
+                                                <!--<label for="showTrue" class="radio-inline"-->
+                                                <!--style="margin-right: 90px;">-->
+                                                <!--<input id="showTrue" name="slt" type="radio" :value="true"-->
+                                                <!--v-model="option.dataZoom[0].show">-->
+                                                <!--显示-->
+                                                <!--</label>-->
+                                                <!--<label for="showFalse" class="radio-inline">-->
+                                                <!--<input id="showFalse" name="slt" type="radio" :value="false"-->
+                                                <!--v-model="option.dataZoom[0].show">-->
+                                                <!--不显示-->
+                                                <!--</label>-->
+                                                <!--</div>-->
+
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">半径</span>
+                                                    </div>
+                                                    <select class="input-group-append form-control"
+                                                            v-model="others.radiusPercentage">
+                                                        <option v-for="value in ['100%', '90%', '80%', '70%', '60%', '50%', '45%', '35%']"
+                                                                :value="value">
+                                                            {{value}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--度量 饼图-->
+                                <div v-if="chartTYPE === 'pie'" class="card  text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="collapsed card-link text-white " data-toggle="collapse"
+                                           href="#collapseMeasure">
+                                            度量
+                                        </a>
+                                    </div>
+                                    <div id="collapseMeasure" class="collapse show bg-darkblue-self">
+                                        <div class="card-body axis-panle-box">
+                                            <div class="input-group mb-3">
+                                                <input class="form-control" v-model="option.series[0].name"/>
+                                            </div>
+
+                                            <tooltip-value-format :t-series-tooltip-value="others.seriesTooltipValue[0]"
+                                                                  :chart-t-y-p-e="chartTYPE"></tooltip-value-format>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--坐标轴-->
+                                <div v-if="this.option.xAxis" class="card  text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="collapsed card-link text-white " data-toggle="collapse"
+                                           href="#collapseFour">
+                                            坐标轴
+                                        </a>
+                                    </div>
+                                    <div id="collapseFour" class="collapse show bg-darkblue-self">
+                                        <div class="card-body">
+                                            <div class="check-panel">
+                                                <ul class="ul-check-axis">
+                                                    <template v-for="axis in axisArray">
+                                                        <li @click="checkAxis = axis.name"
+                                                            :class="{on: checkAxis === axis.name}">
+                                                            {{axis.text}}
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                            <!--水平轴-->
+                                            <div v-show="checkAxis === axisArray[0].name" class="spacing">
+                                                <vertical-axis _id="hz" :target="option.xAxis[0]"></vertical-axis>
+                                            </div>
+                                            <!--垂直左轴-->
+                                            <div v-show="checkAxis === axisArray[1].name" class="spacing">
+                                                <vertical-axis _id="vl" :target="option.yAxis[0]"></vertical-axis>
+                                            </div>
+                                            <!--垂直右轴-->
+                                            <div v-if="axisArray[2] && checkAxis === axisArray[2].name" class="spacing">
+                                                <vertical-axis _id="vr" :target="option.yAxis[1]"></vertical-axis>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--系列设置-->
+                                <div class="card  text-white bg-transparent">
+                                    <div class="card-header bg-gray-self">
+                                        <a class="collapsed card-link text-white " data-toggle="collapse"
+                                           href="#collapseFive">
+                                            系列设置
+                                        </a>
+                                    </div>
+                                    <div id="collapseFive" class="collapse show bg-darkblue-self">
+                                        <div class="card-body axis-panle-box">
+
+                                            <div v-if="chartTYPE === 'line'|| chartTYPE === 'bar'">
+                                                <!--原名-->
+                                                <select v-model="checkSeriesIndex" class="form-control"
+                                                        style="border:transparent; color:white;">
+                                                    <option v-for="(item,index) in dataset.storage.checkedMeasure"
+                                                            :value="index">
+                                                        {{item}}
+                                                    </option>
+                                                </select>
+
+                                                <template v-if="chartTYPE === 'line' || chartTYPE === 'bar' "
+                                                          v-for="(item,index) in option.series">
+                                                    <series-setup v-show="index === checkSeriesIndex"
+                                                                  :dir-Index="index"
+                                                                  :series-index="checkSeriesIndex"
+                                                                  :t-series="item"
+                                                                  :dataset-measure="dataset.storage.checkedMeasure"
+                                                                  :t-series-tooltip-value="others.seriesTooltipValue[index]"
+                                                                  :maximum-value="others.maximumValue"></series-setup>
+                                                </template>
+
+                                            </div>
+                                            <div v-else-if="chartTYPE === 'pie'">
+                                                <select v-model="others.seriesDataIndex"
+                                                        class="form-control bg-gray-self "
+                                                        style="border:transparent; color:white;">
+                                                    <option v-for="(obj, index) in others.seriesData" :value="index">
+                                                        {{obj.name}}
+                                                    </option>
+                                                </select>
+
+                                                <series-name-change-legend
+                                                        :name-object="option.series[0].data[others.seriesDataIndex]">
+                                                </series-name-change-legend>
+                                                <!--<div v-if="option.series[0].data[others.seriesDataIndex]" >-->
+                                                <!--<label>别名</label><br/>-->
+                                                <!--<input class="from-control bg-gray-self"-->
+                                                <!--style="border:transparent;color:white;"-->
+                                                <!--v-model="option.series[0].data[others.seriesDataIndex].name" />-->
+
+                                                <!--</div>-->
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="panel" v-show="currentPanel == 'senior'">senior</div>
+
+                    </div>
+                    <!--右侧控制面板end-->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+</body>
+
+<script>
+
+    userId = 'jhz0';
+    url_root = 'http://bi.lllhy.com/';
+    //点击复制到粘贴板组件
+    new ClipboardJS('.btn');
+    // document.cookie = "JSESSIONID=572D8BAA339057F8AF4F93CB888D00BA";
+    // console.log(document.cookie);
+    //全局vue,操控板使用。
+
+    vue = new Vue({
+        el: '#all',
+        data: {
+            mode: 'edit',
+            boardname: ' ',
+            dragCancel: true,
+            chartBoxTouchEnd: 0,
+            chartBoxClick: 0,
+            //公共属性
+
+            originalDataDemo: {},
+            setOption: false,
+            // makeChartType: 'chartLineBar',
+            // 公共提示框
+            alertBox: {
+                show: false,
+                class: "",
+                test: ""
+            },
+
+            // 右侧面板
+            panels: [
+                {
+                    name: 'data',
+                    text: '数据'
+                }, {
+                    name: 'style',
+                    text: '样式'
+                }, {
+                    name: 'senior',
+                    text: '高级'
+                }
+            ],
+            currentPanel: 'data',
+
+
+            checkAxis: 'horizontal',
+            checkSeriesIndex: 0,
+
+
+            //图表信息储存地
+            charts: [
+                {id: "chart0", dragPosition: [], positionSizeScale: []}
+            ],
+            // 哪个图表
+            whichChart: "chart0",
+            hoverChart: '',
+
+            aFilesName: [],
+            measureComputeWay: {
+                sum: '求和',
+                average: '平均',
+                max: '最大',
+                min: '最小'
+            },
+            // 需被各自图表储存的属性数据
+            // 数据集
+            dataset: {
+                whichDataset: '',
+                //维度
+                demensions: {},
+                //度量
+                measures: {},
+                // 方案二
+                // demensions: ["星期", "其他"],
+                // //度量
+                // measures: ['data0', 'data1', 'data2'],
+                //已选维度、度量存储
+                checked: {
+                    demension: [],
+                    measure: []
+                },
+                measureComputeWay: {},
+                previewRows: 1000,
+                storage: {
+                    checkedDemension: [],
+                    checkedMeasure: [],
+                    chartData: []
+                    // 方案二
+                    // oData: {}
+                    // oDimension: {},
+                    // oMeasure: {}
+                }
+            },
+
+            //公共others,option
+            //配和改变样式的属性
+            others: {
+                //公共
+                // 当无数据时的盖子
+                lidText: "缺少维度和度量,请添加",
+                tuliPosition: "top",
+                // draggableResizable
+                dragResize:{
+                    x: 0,
+                    y: 0,
+                    w: 400,
+                    h: 300
+                },
+                // 线图柱图
+                opacity: 0,
+                quxian: false,
+                doubleYAxis: false,
+                chartType: "{areaStyle: '', stack: ''}",
+                dataLabel: false,
+                hzTitle: '',
+                hzUnit: '',
+                vlTitle: '',
+                vlUnit: '',
+                vrTitle: '',
+                vrUnit: '',
+                maximumValue: [false],
+                seriesTooltipValue: []
+            },
+            option: {
+                title: {
+                    show: true,
+                    text: "线图-1",
+                    subtext: '',
+                    sublink: '',
+                    left: 'left',
+                    textStyle: {
+                        color: '#333',
+                        fontSize: 12
+                    }
+                },
+                backgroundColor: '#ffffff',
+                tooltip: {
+                    show: true,
+                    trigger: 'axis',
+                    padding: [5, 10],
+                    textStyle: {
+                        fontSize: '12px',
+                    },
+                    formatter: function (params, ticket, callback) {
+                        setTimeout(function () {
+                            callback(ticket, vue.tooltipValue(params));
+                        }, 200);
+                        return vue.tooltipValue(params);
+                    },
+                },
+                legend: {
+                    show: true,
+                    data: [],
+                    left: 'center',
+                    top: 'top',
+                    orient: 'horizontal',
+                    textStyle: {
+                        color: '#333'
+                    }
+                },
+                grid: {
+                    top: 20,
+                    right: 15,
+                    bottom: 15,
+                    left: 15,
+                    containLabel: true
+                },
+                dataZoom: [
+                    {
+                        type: 'slider',
+                        show: true,
+                        textStyle: {
+                            color: '#333'
+                        },
+                        backgroundColor: 'rgba(47,69,84,0)',
+                        start: 5,
+                        end: 25
+                    },
+                    {
+                        type: 'inside'
+                    }
+                ],
+                xAxis: [{
+                    type: 'category',
+                    show: true,
+                    name: '',
+                    nameGap: 25,
+                    nameLocation: 'center',
+                    nameTextStyle: {
+                        color: '#333'
+                    },
+                    splitLine: {
+                        show: false,
+                        lineStyle: {
+                            type: 'solid',
+                            color: '#ccc',
+                            width: '.4',
+                        }
+                    },
+                    axisLine: {
+                        show: true,
+                        lineStyle: {
+                            type: 'solid',
+                            color: '#333',
+                            width: '.4'
+                        }
+                    },
+                    axisLabel: {
+                        show: true,
+                        color: '#333'
+                    },
+                    axisTick: {
+                        show: false,
+                        lineStyle: {
+                            width: .4
+                        }
+                    },
+                    boundaryGap: true,
+                    data: []
+                }],
+                yAxis: [{
+                    type: 'value',
+                    show: true,
+                    name: '',
+                    nameLocation: 'center',
+                    nameTextStyle: {
+                        color: '#333'
+                    },
+                    nameGap: 5,
+                    min: null,
+                    max: null,
+                    axisLine: {
+                        show: true,
+                        lineStyle: {
+                            type: 'solid',
+                            color: '#333',
+                            width: '.4'
+                        }
+                    },
+                    axisLabel: {
+                        show: true,
+                        color: '#333'
+                    },
+                    splitLine: {
+                        show: false,
+                        lineStyle: {
+                            type: 'solid',
+                            color: '#ccc',
+                            width: '.4',
+                        }
+                    },
+                    axisTick: {
+                        show: false,
+                        lineStyle: {
+                            width: .4
+                        }
+                    }
+                }],
+                series: [{
+                    name: '',
+                    type: 'line',
+                    // seriesLayoutBy: 'row',
+                    stack: '',
+                    yAxisIndex: 0,
+                    showSymbol: true,
+                    symbol: 'circle',
+                    smooth: false,
+                    label: {
+                        show: false,
+                        color: ''
+                    },
+                    itemStyle: {
+                        color: ''
+                    },
+                    lineStyle: {
+                        type: 'solid'
+                    },
+                    markPoint: {
+                        data: []
+                    },
+                    // 折线图在数据量远大于像素点时
+                    // 降采样策略,取过滤点的平均值
+                    sampling: 'average'
+                    // areaStyle: {
+                    // }
+                }]
+            },
+
+
+            //各个图表数据属性
+            chartLine: {
+                others: {
+                    tuliPosition: "top",
+                    dragResize:{
+                        x: 0,
+                        y: 0,
+                        w: 400,
+                        h: 300
+                    },
+                    opacity: 0,
+                    quxian: false,
+                    // 当无数据时的盖子
+                    lidText: "缺少维度和度量,请添加",
+                    doubleYAxis: false,
+                    chartType: "{areaStyle: '', stack: ''}",
+                    dataLabel: false,
+                    hzTitle: '',
+                    hzUnit: '',
+                    vlTitle: '',
+                    vlUnit: '',
+                    vrTitle: '',
+                    vrUnit: '',
+                    maximumValue: [false],
+                    seriesTooltipValue: []
+                },
+                option: {
+                    title: {
+                        show: true,
+                        text: "线图-1",
+                        subtext: '',
+                        sublink: '',
+                        left: 'left',
+                        textStyle: {
+                            color: '#333',
+                            fontSize: 12
+                        }
+                    },
+                    backgroundColor: '#ffffff',
+                    tooltip: {
+                        show: true,
+                        trigger: 'axis',
+                        padding: [5, 10],
+                        textStyle: {
+                            fontSize: '12px',
+                        },
+                        formatter: function (params, ticket, callback) {
+                            setTimeout(function () {
+                                callback(ticket, vue.tooltipValue(params));
+                            }, 200);
+                            return vue.tooltipValue(params);
+                        },
+                    },
+                    legend: {
+                        show: true,
+                        data: [],
+                        left: 'center',
+                        top: 'top',
+                        orient: 'horizontal',
+                        textStyle: {
+                            color: '#333'
+                        }
+                    },
+                    grid: {
+                        top: 20,
+                        right: 15,
+                        bottom: 15,
+                        left: 15,
+                        containLabel: true
+                    },
+                    dataZoom: [
+                        {
+                            type: 'slider',
+                            show: true,
+                            textStyle: {
+                                color: '#333'
+                            },
+                            backgroundColor: 'rgba(47,69,84,0)',
+                            start: 5,
+                            end: 25
+                        },
+                        {
+                            type: 'inside'
+                        }
+                    ],
+                    xAxis: [{
+                        type: 'category',
+                        show: true,
+                        name: '',
+                        nameGap: 25,
+                        nameLocation: 'center',
+                        nameTextStyle: {
+                            color: '#333'
+                        },
+                        splitLine: {
+                            show: false,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#ccc',
+                                width: '.4',
+                            }
+                        },
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#333',
+                                width: '.4'
+                            }
+                        },
+                        axisLabel: {
+                            show: true,
+                            color: '#333'
+                        },
+                        axisTick: {
+                            show: false,
+                            lineStyle: {
+                                width: .4
+                            }
+                        },
+                        boundaryGap: true,
+                        data: []
+                    }],
+                    yAxis: [{
+                        type: 'value',
+                        show: true,
+                        name: '',
+                        nameLocation: 'center',
+                        nameTextStyle: {
+                            color: '#333'
+                        },
+                        nameGap: 5,
+                        min: null,
+                        max: null,
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#333',
+                                width: '.4'
+                            }
+                        },
+                        axisLabel: {
+                            show: true,
+                            color: '#333'
+                        },
+                        splitLine: {
+                            show: false,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#ccc',
+                                width: '.4',
+                            }
+                        },
+                        axisTick: {
+                            show: false,
+                            lineStyle: {
+                                width: .4
+                            }
+                        }
+                    }],
+                    series: [{
+                        name: '',
+                        type: 'line',
+                        // seriesLayoutBy: 'row',
+                        stack: '',
+                        yAxisIndex: 0,
+                        showSymbol: true,
+                        symbol: 'circle',
+                        smooth: false,
+                        label: {
+                            show: false,
+                            color: ''
+                        },
+                        itemStyle: {
+                            color: ''
+                        },
+                        lineStyle: {
+                            type: 'solid'
+                        },
+                        markPoint: {
+                            data: []
+                        },
+                        // 折线图在数据量远大于像素点时
+                        // 降采样策略,取过滤点的平均值
+                        sampling: 'average'
+                        // areaStyle: {
+                        // }
+                    }]
+                }
+            },
+            chartBar: {
+                others: {
+                    tuliPosition: "top",
+                    dragResize:{
+                        x: 0,
+                        y: 0,
+                        w: 400,
+                        h: 300
+                    },
+                    opacity: 0,
+                    quxian: false,
+                    // 当无数据时的盖子
+                    lidText: "缺少维度和度量,请添加",
+                    doubleYAxis: false,
+                    chartType: "{areaStyle: '', stack: ''}",
+                    dataLabel: false,
+                    hzTitle: '',
+                    hzUnit: '',
+                    vlTitle: '',
+                    vlUnit: '',
+                    vrTitle: '',
+                    vrUnit: '',
+                    maximumValue: [false],
+                    seriesTooltipValue: []
+                },
+                option: {
+                    title: {
+                        show: true,
+                        text: "柱图",
+                        subtext: '',
+                        sublink: '',
+                        left: 'left',
+                        textStyle: {
+                            color: '#333',
+                            fontSize: 12
+                        }
+                    },
+                    backgroundColor: '#ffffff',
+                    tooltip: {
+                        show: true,
+                        trigger: 'axis',
+                        padding: [5, 10],
+                        textStyle: {
+                            fontSize: '12px',
+                        },
+                        formatter: function (params, ticket, callback) {
+                            setTimeout(function () {
+                                callback(ticket, vue.tooltipValue(params));
+                            }, 200);
+                            return vue.tooltipValue(params);
+                        },
+                    },
+                    legend: {
+                        show: true,
+                        data: [],
+                        left: 'center',
+                        top: 'top',
+                        orient: 'horizontal',
+                        textStyle: {
+                            color: '#333'
+                        }
+                    },
+                    grid: {
+                        top: 20,
+                        right: 15,
+                        bottom: 15,
+                        left: 15,
+                        containLabel: true
+                    },
+                    dataZoom: [
+                        {
+                            type: 'slider',
+                            show: true,
+                            textStyle: {
+                                color: '#333'
+                            },
+                            backgroundColor: 'rgba(47,69,84,0)',
+                            start: 5,
+                            end: 25
+                        },
+                        {
+                            type: 'inside'
+                        }
+                    ],
+                    xAxis: [{
+                        type: 'category',
+                        show: true,
+                        name: '',
+                        nameGap: 25,
+                        nameLocation: 'center',
+                        nameTextStyle: {
+                            color: '#333'
+                        },
+                        splitLine: {
+                            show: false,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#ccc',
+                                width: '.4',
+                            }
+                        },
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#333',
+                                width: '.4'
+                            }
+                        },
+                        axisLabel: {
+                            show: true,
+                            color: '#333'
+                        },
+                        axisTick: {
+                            show: false,
+                            lineStyle: {
+                                width: .4
+                            }
+                        },
+                        boundaryGap: true,
+                        data: []
+                    }],
+                    yAxis: [{
+                        type: 'value',
+                        show: true,
+                        name: '',
+                        nameLocation: 'center',
+                        nameTextStyle: {
+                            color: '#333'
+                        },
+                        nameGap: 45,
+                        min: null,
+                        max: null,
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#333',
+                                width: '.4'
+                            }
+                        },
+                        axisLabel: {
+                            show: true,
+                            color: '#333'
+                        },
+                        splitLine: {
+                            show: false,
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#ccc',
+                                width: '.4',
+                            }
+                        },
+                        axisTick: {
+                            show: false,
+                            lineStyle: {
+                                width: .4
+                            }
+                        }
+                    }],
+                    series: [{
+                        name: '',
+                        type: 'bar',
+                        // seriesLayoutBy: 'row',
+                        stack: '',
+                        yAxisIndex: 0,
+                        showSymbol: true,
+                        symbol: 'circle',
+                        smooth: false,
+                        label: {
+                            show: false,
+                            color: ''
+                        },
+                        itemStyle: {
+                            color: ''
+                        },
+                        lineStyle: {
+                            type: 'solid'
+                        },
+                        markPoint: {
+                            data: []
+                        },
+                        // 折线图在数据量远大于像素点时
+                        // 降采样策略,取过滤点的平均值
+                        sampling: 'average'
+                        // areaStyle: {
+                        // }
+                    }]
+                }
+            },
+            chartPie: {
+                others: {
+                    //公共
+                    lidText: "缺少维度和度量,请添加",
+                    tuliPosition: 'top',
+                    dragResize:{
+                        x: 0,
+                        y: 0,
+                        w: 400,
+                        h: 300
+                    },
+                    seriesTooltipValue: [],
+                    //私人
+                    radius: ['0', '60%'],
+                    radiusPercentage: '100%',
+                    seriesDataIndex: 0,
+                    seriesData: []
+                },
+                option: {
+                    title: {
+                        show: true,
+                        text: "饼图",
+                        subtext: '',
+                        sublink: '',
+                        left: 'left',
+                        textStyle: {
+                            color: '#333',
+                            fontSize: 12
+                        }
+                    },
+                    backgroundColor: '#ffffff',
+                    legend: {
+                        show: true,
+                        type: 'scroll',
+                        data: [],
+                        left: 'center',
+                        top: 'top',
+                        orient: 'horizontal',
+                        textStyle: {
+                            color: '#333'
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: function (params, ticket, callback) {
+                            setTimeout(function () {
+                                callback(ticket, vue.tooltipValue(params));
+                            }, 200);
+                            return vue.tooltipValue(params);
+                        }
+                        // formatter: "{a} <br/>{b} : {c} ({d}%)"
+                    },
+                    series: [
+                        {
+                            name: '访问来源',
+                            type: 'pie',
+                            radius: ['0', '60%'],
+                            center: ['50%', '60%'],
+                            label: {
+                                show: true,
+                                color: '#333',
+                                formatter: '({b})  {d}%'
+
+                            },
+                            labelLine: {
+                                show: true
+                            },
+                            itemStyle: {
+                                emphasis: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            },
+                            data: []
+                        }
+                    ]
+                }
+            },
+
+        },
+        methods: {
+
+            //公共方法
+
+            onResize: function (x, y, width, height) {
+                let curArray = [x, y, width, height];
+                let id = this.chartIdByPositionSize(curArray);
+                if(!id) return;
+                this.others.dragResize ={
+                    x,
+                    y,
+                    w: width,
+                    h: height
+                };
+                this.whichChart = id;
+
+                let parent = $('#' + id).parents(".chart-bigBox");
+                parent.find('.jResize').width(curArray[2]);
+                parent.find('.jResize').height(curArray[3]);
+
+                echarts.init(document.getElementById(id)).resize();
+
+            },
+            onDrag: function (x, y) {
+                let curArray = [x, y];
+                let id = this.chartIdByPositionSize(curArray);
+                if(!id) return;
+                this.others.dragResize.x = x;
+                this.others.dragResize.y = y;
+                this.whichChart = id;
+            },
+            chartIdByPositionSize(curArray) {
+                let positionSize = this.chartPositionObject();
+                let aName = [];
+                for (let name in positionSize) {
+                    let oneArray = positionSize[name];
+                    let count = 0;
+                    let about = 0;
+                    for (let i = 0; i < curArray.length; i++) {
+                        if (curArray[i] === oneArray[i]) count++;
+                        if (Math.abs(curArray[i] - oneArray[i]) < 15) about++;
+                    }
+                    if (count === curArray.length || about === curArray.length) {
+                        aName.push(name);
+                    }
+                }
+                if (aName.length >= 2 || aName.length < 1) {
+                    return this.whichChart;
+                } else {
+                    return aName[0];
+                }
+            },
+            chartPositionObject() {
+                let charts = this.charts;
+                let positionSize = {};
+                for (let i = 0; i < charts.length; i++) {
+                    let id = charts[i].id;
+                    let vdr = $('#' + id).parents('.vdr');
+                    let y = vdr.position().top;
+                    let x = vdr.position().left;
+                    let width = vdr.width();
+                    let height = vdr.height();
+                    positionSize[id] = [x, y, width, height];
+                }
+                return positionSize;
+            },
+            restructureChartsPositionSize(charts, [width, height],isAnimate = true) {
+                // 去px
+                width = parseFloat(width);
+                height = parseFloat(height);
+                // console.log([width,height]);
+                for (let i = 0; i < charts.length; i++) {
+                    let chart = charts[i];
+                    let bigBox = $('#' + chart.id).parents('.chart-bigBox');
+                    let oCss = {
+                        'left': width * chart.positionSizeScale[0] + 'px',
+                        'top': height * chart.positionSizeScale[1] + 'px',
+                        'width': width * chart.positionSizeScale[2] + 'px',
+                        'height': height * chart.positionSizeScale[3] + 'px'
+                    };
+
+                    // console.log(oCss);
+                    //动画
+                    //bigBox 大小位置都变
+                    if(isAnimate){
+                        bigBox.animate(oCss, function () {
+                            echarts.init(document.getElementById(chart.id)).resize();
+                        });
+                    }else {
+                        bigBox.css(oCss);
+                        echarts.init(document.getElementById(chart.id)).resize();
+                    }
+
+                    //其他的子孙元素，只要大小变化
+                    // bigBox.find('.jResize').animate({
+                    //     'width': oCss.width,
+                    //     'height': oCss.height
+                    // },function () {
+                    //     echarts.init(document.getElementById(chart.id)).resize();
+                    // });
+                    //等待动画结束后，重新渲染图表大小
+                    // setTimeout(function () {
+                    //     echarts.init(document.getElementById(chart.id)).resize();
+                    // }, 250);
+                    // setTimeout(function () {
+                    //     echarts.init(document.getElementById(chart.id)).resize();
+                    // }, 300);
+                    // setTimeout(function () {
+                    //     echarts.init(document.getElementById(chart.id)).resize();
+                    // }, 350);
+
+                }
+            },
+            callRestructureChartsPositionSize(isAnimate = true){
+                //图表根据新界面发生重构
+                let parentWidth = parseFloat($('.left-page').css('width'));
+                let parentHeight = parseFloat($('.left-page').css('height'));
+
+                charts = $.extend(true, [], this.charts);
+                this.restructureChartsPositionSize(charts, [parentWidth, parentHeight], isAnimate)
+            },
+            vueDraggableResizableLeftTop(ref){
+                let chart = this.findChart(ref);
+                let dragResize = chart.others.dragResize;
+                let _data = this.$refs[ref][0]._data;
+                // console.log(_data);
+                _data.left = dragResize.x;
+                _data.top = dragResize.y;
+                _data.width = dragResize.w;
+                _data.height = dragResize.h;
+            },
+            setChartsPositionSize() {
+                let charts = this.charts;
+                let parentWidth = parseFloat($('.left-page').css('width'));
+                let parentHeight = parseFloat($('.left-page').css('height'));
+                if ($('.left-page')) {
+                    for (let i = 0; i < charts.length; i++) {
+
+                        let array = this.chartPositionObject()[charts[i].id];
+                        array[0] /= parentWidth;
+                        array[1] /= parentHeight;
+                        array[2] /= parentWidth;
+                        array[3] /= parentHeight;
+
+                        Vue.set(charts[i], 'positionSizeScale', array);
+                    }
+                }
+            },
+            eChartSetOption(id, option) {
+                let myChart = echarts.init(document.getElementById(id));
+                myChart.setOption(option, true);
+            },
+            //将选中的数据传入
+
+            ajaxUpdate() {
+                if (this.whichChart === ""){
+                    let text = "未选中图表";
+                    this.showAlertBox('bg-warning', text);
+                    return;
+                }
+
+                let dataset = this.dataset;
+                //检查维度与度量是否缺失,并反馈
+                var measure_len = dataset.checked.measure.length;
+                var demension_len = dataset.checked.demension.length;
+                var alert_s = demension_len < 1 ? "维度" : "";
+
+                alert_s += measure_len < 1 ? (alert_s === "" ? "度量" : "和度量") : "";
+                if (alert_s !== "") {
+                    alert_s = "缺少" + alert_s + ",请添加";
+
+                    // 启用图表的盖子
+                    this.others.lidText = alert_s;
+                    this.showAlertBox("bg-danger", alert_s);
+                    return;
+                }
+
+                // 关闭盖子
+                this.others.lidText = '';
+
+
+                //请求并储存图表数据
+                this.ajaxChartData();
+
+
+            },
+
+            //对charts渲染图表，内series已有，无需替换
+            updateSeries(chart = this) {
+
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                let tseries = [];
+                var measure_len = checked.measure.length;
+                var demension_len = checked.demension.length;
+
+
+                for (let i = 0; i < checked.measure.length; i++) {
+                    var tname = checked.measure[i];
+                    // var serie = $.extend(true, {}, dataset.serieDemo);
+                    let index = this.option.series.length > i ? i : 0;
+
+                    let series = $.extend(true, [], this.option.series);
+                    let seriesDemo = $.extend(true, {}, this.findOriginalChartByType(this.chartTYPE).option.series[0]);
+                    //找回series,如有同name,则series留用
+                    let oldMeasure = this.findChart(this.whichChart).dataset.storage.checkedMeasure;
+
+                    //others.seriesTooltipValue
+                    let seriesTooltipValueDemo = ['#', 0, false];
+                    let oldtTooltopValue = this.findChart(this.whichChart).others.seriesTooltipValue;
+
+
+                    for (let j = 0; j < oldMeasure.length; j++) {
+                        if (oldMeasure[j] === tname) {
+                            // console.log(tname)
+                            seriesDemo = {};
+                            seriesDemo = series[j];
+                            //others.seriesTooltipValue
+                            seriesTooltipValueDemo = oldtTooltopValue[i];
+                        }
+                    }
+
+                    let serie = $.extend(true, {}, seriesDemo);
+
+                    //data
+                    // serie.data = dataset.measures[tname];
+                    // serie.data =  this.datasetNameToArray(tname);
+
+                    //如果别名存在，则赋值别名
+                    serie.name = this.alias[tname] ? this.alias[tname] : tname;
+
+                    if (this.option.series.length > 0 && this.option.series[0].areaStyle) serie.areaStyle = {};
+
+                    tseries.push(serie);
+
+                    //others.seriesTooltipValue
+                    let aSeriesTooltipValue = $.extend(true, [], seriesTooltipValueDemo);
+                    Vue.set(this.others.seriesTooltipValue, i, aSeriesTooltipValue);
+                }
+                //
+                Vue.set(chart.option, 'series', $.extend(true, [], tseries));
+                // return tseries;
+            },
+
+                // 请求数据获取到注入图表函数的集群
+            packageCallupdateData(chart){
+                //请求数据
+                this.ajaxChartData(chart);
+            },
+            ajaxChartData(chart = this, lines = 0) {
+                let _this = this;
+
+                let vStrdStr = this.vStrdStr(chart);
+                let pattern = this.computePattern(chart);
+                lines = lines? lines : chart.dataset.previewRows;
+
+                //访问数据维度和度量具体数据 ，并保存
+                oOrdinaryJqueryAjax({
+                    url: url_root + "fileHandle/getInfo.json?method=fastGet",
+                    data: {
+                        userId,
+                        fileName: chart.dataset.whichDataset,
+                        vStr: vStrdStr.vStr,
+                        dStr: vStrdStr.dStr,
+                        lines,
+                        pattern
+                    }
+                }, function (response) {
+                    if (response.message === "Success") {
+
+                        if (response.data) {
+
+                            for (let key in response.data) {
+                                delete response.data[key];
+                                break;
+                            }
+                            chart.dataset.storage.chartData = response.data;
+                            //开始更新图表数据工作
+                            let updateAll = chart.id? false: true;
+                            _this.updateDataset(chart, updateAll );
+                        } else {
+                            console.log("维度和度量数据错误");
+                        }
+
+                    } else {
+                        console.log("获取维度和度量错误");
+                    }
+                })
+            },
+            vStrdStr(chart = this) {
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                let check_v = checked.demension;
+                let check_d = checked.measure;
+                if (check_v < 1 || check_d < 1) {
+                    console.log("维度和度量有为勾选");
+                    return
+                }
+                let vStr = "";
+                let dStr = "";
+
+                for (let i = 0; i < check_v.length; i++) {
+                    let order = dataset.demensions[check_v[i]];
+
+                    vStr += order + '/';
+                }
+                vStr = vStr.substr(0, vStr.length - 1);
+
+                for (let i = 0; i < check_d.length; i++) {
+                    let order = dataset.measures[check_d[i]];
+
+                    dStr += order + '/';
+                }
+                dStr = dStr.substr(0, dStr.length - 1);
+
+                return {
+                    vStr,
+                    dStr
+                }
+            },
+            computePattern(chart = this) {
+                let pattern = '';
+                let dataset = chart.dataset;
+                let checkedMeasure = dataset.checked.measure;
+                let oComputeWAy = dataset.measureComputeWay;
+                for (let i = 0; i < checkedMeasure.length; i++) {
+                    let way = oComputeWAy[checkedMeasure[i]];
+                    if (!way) {
+                        way = 'sum';
+                    }
+                    pattern += way + '/';
+                }
+                pattern = pattern.substr(0, pattern.length - 1);
+                return pattern;
+            },
+            updateDataset( chart = this, updateAll = true) {
+                if(this.setOption || this.setOption === false){
+                    this.setOption = true;
+                }
+                //用checked里的维度和度量！！！
+                //更新series, seriesTooltopValue
+                if(updateAll){
+                    this.updateSeries();
+                }else {
+                    this.setSeriesName(chart)
+                }
+                //线图，柱图时
+                if (chart.option.series[0].type === 'line' || chart.option.series[0].type === 'bar') {
+                    this.updateDatasetLineBar(chart);
+                }
+                // 饼图时
+                if (chart.option.series[0].type === 'pie') {
+                    this.updateDatasetPie(chart);
+                }
+                if(updateAll){
+                    //先设置其他的，再保存选了哪些维度和度量
+                    this.storageCheckedDataset();
+                }
+
+                //公共导入legend.data
+                this.nameSeriesToLegend(chart);
+
+            },
+            setSeriesName(chart = this){
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                let series = chart.option.series;
+                for (let i = 0; i < checked.measure.length; i++) {
+                    var tname = checked.measure[i];
+                    //如果别名存在，则赋值别名
+                    series[i].name = this.methodAlias(chart)[tname] ? this.methodAlias(chart)[tname] : tname;
+                }
+            },
+            nameSeriesToLegend(chart = this) {
+                // console.log(chart.option.series[0]);
+                let series = chart.option.series;
+                if(series.length < 1) return;
+                this.option.legend.data = [];
+
+                if (series[0].type === 'line' || series[0].type === 'bar') {
+                    for (let i = 0; i < series.length; i++) {
+                        chart.option.legend.data[i] = series[i].name;
+                    }
+                } else if (series[0].type === 'pie') {
+                    let data = series[0].data;
+                    for (let i = 0; i < data.length; i++) {
+                        chart.option.legend.data[i] = data[i].name;
+                    }
+                }
+            },
+            datasetNameToArray(tname, chart = this) {
+                let checked = chart.dataset.checked;
+                if (checked.demension.indexOf(tname) >= 0) {
+                    //查维度 合并返回
+                    if(chart.id){
+                        return this.methodDimensionArray(chart);
+                    }else {
+                        return this.dimensionArray;
+                    }
+                } else if (checked.measure.indexOf(tname) >= 0) {
+                    //查度量，从this.measureArray计算缓冲中找出
+                    let index = checked.measure.indexOf(tname);
+                    if(chart.id){
+                        return this.methodMeasureArray(chart)[index];
+                    }else {
+                        return this.measureArray[index];
+                    }
+
+                }
+
+                // let dataIndex = storage.chartData[0].indexOf(tname);
+                // if(dataIndex < 0){
+                //     console.log(tname+'该度量名，无对应数据');
+                //     return;
+                // }
+                // let aResult = []
+                // // i=1 跳过第一个
+                // for(let i=1; i<storage.chartData.length; i++){
+                //     aResult.push(storage.chartData[i][dataIndex])
+                // }
+                // return aResult;
+            },
+            methodAlias(chart = this){
+                let result = {};
+                let legendDate = chart.option.legend.data;
+                //度量原名数组
+                let measure = chart.dataset.storage.checkedMeasure;
+                if (measure.length > 0) {
+                    for (let i = 0; i < legendDate.length; i++) {
+                        result[measure[i]] = legendDate[i]
+                    }
+                }
+                return result;
+            },
+            methodDimensionArray(chart){
+                let chartData = chart.dataset.storage.chartData;
+                if (chartData) {
+                    let aDimension = [];
+                    for (let key in chartData) {
+                        // let dimension = '';
+                        // key = key.replace('[','');
+                        // key = key.replace(']','');
+                        // key = key.replace(',','-');
+                        // key = key.replace(' ','');
+
+                        // for(let item in eval(key)){
+                        //     dimension += item +'-';
+                        // }
+                        // dimension = dimension.substring(0,dimension.length - 1);
+                        aDimension.push(key);
+                    }
+                    return aDimension;
+                } else {
+                    return [];
+                }
+            },
+            methodMeasureArray(chart){
+                let chartData = chart.dataset.storage.chartData;
+                let dimension = [];
+
+                dimension = Object.keys(chartData);
+
+                if (dimension !== []) {
+                    let len = chartData[dimension[0]].length;
+                    let aMeasure = new Array(len);
+                    for (let i = 0; i < len; i++) {
+                        aMeasure[i] = [];
+                    }
+                    for (let i = 0; i < dimension.length; i++) {
+                        let array = chartData[dimension[i]];
+                        for (let j = 0; j < len; j++) {
+                            aMeasure[j].push(array[j]);
+                        }
+                    }
+                    return aMeasure;
+                } else {
+                    return [];
+                }
+            },
+            //功能函数
+            tooltipValue(params) {
+                let loading = 'loading...';
+                let tChart = {};
+                //
+                // let tChart = this;
+                // let aTooltipValue = tChart.others.seriesTooltipValue;
+
+                //this优先，看是否合理，不合理,则用hoverChart
+                // if(this.hoverChart){
+                //     if(!aTooltipValue||!params[0] || aTooltipValue.length !== params.length){
+                //         tChart = this.findChart(this.hoverChart);
+                //     }
+                // }
+                if (this.hoverChart) {
+                    tChart = this.findChart(this.hoverChart);
+                } else {
+                    tChart = this;
+                }
+                let aTooltipValue = tChart.others.seriesTooltipValue;
+                let chartType = tChart.option.series[0].type;
+
+                if (!aTooltipValue || aTooltipValue.length < 1) return loading;
+
+                let result = '';
+                if (chartType === 'line' || chartType === 'bar') {
+                    if (!params[0] || !params[0].axisValue) return loading;
+
+                    result = '' + params[0].axisValue + '<br/>';
+                    for (let i = 0; i < params.length; i++) {
+                        let aTooltip = aTooltipValue[i];
+
+                        let param = params[i];
+                        let sValue = '' + param.value;
+                        sValue = this.tooltipValueTransform(sValue, aTooltip);
+
+                        result += param.marker + param.seriesName +
+                            '<i style="display:inline-block;width: 30px;"></i> '
+                            + sValue + '<br/>'
+                    }
+                } else if (chartType === 'pie') {
+                    if (!params.data) return loading;
+                    result = '' + params.data.name + '<br/>';
+                    let aTooltip = aTooltipValue[0];
+                    let sValue = this.tooltipValueTransform(params.data.value, aTooltip);
+
+                    result += params.marker + params.seriesName +
+                        '<i style="display:inline-block;width: 30px;"></i> ' + sValue
+                }
+
+                return result;
+            },
+            tooltipValueTransform(sValue, aTooltip) {
+                if (!aTooltip || aTooltip.length < 1) return '';
+
+
+                sValue += '';
+                //存正负号
+                let sign = sValue.includes('-') ? '-' : '';
+                sValue = sValue.replace('-', '');
+                // 去千分位
+                sValue = sValue.replace(',', '');
+
+                if (sValue.includes('%')) {
+                    //去%会影响数值大小
+                    sValue = sValue.replace('%', '');
+                    sValue = '' + parseFloat(sValue) / 100;
+                }
+
+                if (aTooltip[0] === '%') {
+                    sValue = parseFloat(sValue) * 100;
+                }
+
+                //保留小数位
+                sValue = '' + parseFloat(sValue).toFixed(aTooltip[1]);
+                //千分位
+                if (aTooltip[2]) {
+                    let sInteger = sValue.split('.')[0];
+                    let sDecimal = sValue.split('.')[1] ? '.' + sValue.split('.')[1] : '';
+
+                    let re = /(?=(?!(\b))(\d{3})+$)/g;
+                    sInteger = sInteger.replace(re, ",");
+                    //字符串
+                    sValue = sInteger + sDecimal;
+                }
+
+                //数值还是百分比
+                if (aTooltip[0] === '%') {
+                    sValue += '%';
+                }
+                //加正负号
+                return sign + sValue;
+            },
+            removeChartsData(aChart){
+                let aResult = $.extend(true, [], aChart);
+                for(let i=0; i<aResult.length; i++){
+                    let chart = aResult[i];
+                    chart.dataset.storage.chartData = [];
+                    let option = chart.option;
+                    let series = option.series;
+                    for(let i=0; i<series.length; i++){
+                        series[i].data = [];
+                    }
+                    option.legend.data = [];
+
+                    if(option.xAxis){
+                        let xAxis = option.xAxis;
+                        for(let i=0; i<xAxis.length; i++){
+                            xAxis[i].data = [];
+                        }
+                    }
+                }
+                return aResult;
+            },
+            // ajax
+            saveTheDashboard() {
+                let _this = this;
+                this.setChartsPositionSize();
+                let boardinfo = JSON.stringify({
+                    public: '',
+                    charts: this.removeChartsData(this.charts)
+                });
+                oOrdinaryJqueryAjax({
+                    url: url_root + "dashboard/boardaction.json?method=update",
+                    data: {
+                        boardname: this.boardname,
+                        boardinfo,
+                        timestemp: new Date().getTime()
+                    }
+                }, function (response) {
+                    if(response.message = "Success"){
+                        let text = '保存成功';
+                        _this.showAlertBox('bg-success',text);
+                    }
+
+
+                    // console.log(response);
+                    // if(response.message === 'Success'){
+                    //     console.log(document.cookie);
+                    // }
+                });
+            },
+            sharePortal() {
+                let portalname = $('#portalname').val();
+                if(!portalname){
+                    $('#portalname').focus();
+                    let text = "请输入名字";
+                    this.showAlertBox('bg-danger',text);
+                    return;
+                }
+
+
+                let _this = this;
+                this.setChartsPositionSize();
+                let charts = this.removeChartsData(this.charts);
+
+                let boardinfo = JSON.stringify({
+                    public: {},
+                    charts
+                })
+                let portalurl = './showCharts.html?boardname='+this.boardname;
+
+                oOrdinaryJqueryAjax({
+                    url: url_root+'dashboard/boardaction.json?method=update',
+                    data:{
+                        portaltype: 1,
+                        boardname: this.boardname,
+                        portalname,
+                        portalurl,
+                        boardinfo,
+                        timestemp: new Date().getTime()
+                    }
+                },function (response) {
+                    if(response.message === 'Success'){
+                        $('#foo').val("http://localhost:63342/visualization/showCharts.html?boardname="+_this.boardname);
+                        let text = '保存成功';
+                        _this.showAlertBox('bg-success', text);
+                        setTimeout(()=>{
+                            _this.copyClean();
+                        }, 5000);
+                    }
+                });
+
+            },
+            //复制链接时，清空数据
+            copyClean(){
+                $('#portalname').val('');
+                setTimeout(()=>{
+                    $('#foo').val('')
+                },500)
+
+            },
+
+            //公共分类讨论
+            storageCheckedDataset() {
+                let dataset = this.dataset;
+                let checked = dataset.checked;
+                let storage = dataset.storage;
+                //赋值storage.checkedMeasure
+                storage.checkedDemension = $.extend(true, [], checked.demension);
+                storage.checkedMeasure = $.extend(true, [], checked.measure);
+            },
+            //更新series, seriesTooltopValue,（无数据)
+
+            //增加图表，并将模型储存
+            addChart: function (_chartType) {
+                let positionSize = this.chartPositionObject();
+
+                let date = new Date();
+                let chartId = "chart" + date.getTime();
+                this.charts.push({id: chartId});
+
+                let chart = this.findChart(chartId);
+                this.whichChart = chartId;
+
+                // let isBar = false;
+                // if(_chartType.includes('Line')){
+                //     _chartType = 'chartLineBar';
+                // }else if(_chartType.includes('Bar')){
+                //     _chartType = 'chartLineBar';
+                // }
+                // this.option = $.extend(true, {}, vue[vue.makeChartType].option);
+                // this.others = $.extend(true, {}, vue[vue.makeChartType].others);
+                this.option = $.extend(true, {}, vue[_chartType].option);
+                this.others = $.extend(true, {}, vue[_chartType].others);
+                let demension = this.dataset.demensions;
+                let measures = this.dataset.measures;
+                this.initialize(['dataset']);
+
+                this.dataset.demensions = demension;
+                this.dataset.measures = measures;
+                //延迟，弥补点击穿透，二次；
+                setTimeout(function () {
+                    vue.dragCancel = false;
+                }, 350);
+                //新图表position设置
+                // let xY = this.newChartPosition(positionSize);
+                //
+                // this.$nextTick(function () {
+                //
+                //
+                //     $('#'+chartId).parents('.chart-bigBox').css({
+                //         left: xY[0] +'px',
+                //         top: xY[1] +'px'
+                //     })
+                // })
+                // console.log(this.dragCancel);
+                // 图表原始数据储存
+                // this.CopyIndependent(chart, this.originalDataDemo);
+                // this.CopyIndependent(chart, this.originalDataDemo );
+                // chart.option = $.extend(true, {}, this.pieOption);
+                // 初步渲染图表
+                // this.$nextTick(function () {
+                //     discountChart(chartId, this.originalDataDemo.option);
+                // });
+
+                // this.$nextTick(function () {
+                //     discountChart(chartId, vue[vue.makeChartType]);
+                // });
+
+
+            },
+            newChartPosition(positionSize) {
+
+                let parentWidth = parseFloat($('.left-page').css('width'));
+                let parentHeight = parseFloat($('.left-page').css('height'));
+                let divW = 400;
+                let divH = 250;
+                //右下角
+                let maxY = 0;
+                let maxX = 0;
+                console.log('len' + positionSize.length)
+                for (let key in positionSize) {
+                    let chart = positionSize[key];
+
+                    if (chart[1] + chart[3] > maxY) {
+                        maxY = chart[1] + chart[3];
+
+                        maxX = chart[0] + chart[2];
+                    }
+                }
+                for (; maxX < parentWidth; maxX += divW) {
+                    let tY = 0;
+                    for (let key in positionSize) {
+                        let chart = positionSize[key];
+                        let curY = chart[1] + chart[3];
+                        let curX = chart[0] + chart[2];
+                        if (curX > maxX && curX <= maxX + divW && curY > tY) {
+                            tY = curY;
+                        }
+                    }
+                    if (tY + 2 * divH / 3 < maxY) {
+                        return [maxX, tY];
+                    }
+                }
+                //下一行
+                return [0, maxY];
+
+
+            },
+            //图表信息传递，对象b的值给a,两者独立，不引用
+            isPC() {
+                let userAgentInfo = navigator.userAgent;
+                let Agents = ['Android', 'iPhone',
+                    'SymbianOS', 'Windows Phone',
+                    'iPad', 'iPod'
+                ];
+                let flag = true;
+                for (let i = 0; i < Agents.length; i++) {
+                    if (userAgentInfo.indexOf(Agents[i]) != -1) {
+                        flag = false;
+                        break;
+                    }
+                }
+                return flag;
+            },
+            CopyIndependent: function (a, b) {
+                // a.others = $.extend(true,{}, b.others);
+                Vue.set(a, 'others', $.extend(true, {}, b.others));
+                a.dataset = $.extend(true, {}, b.dataset);
+                a.option = $.extend(true, {}, b.option);
+
+            },
+            //点击选中图表，更新whichChart值
+            checked: function (even) {
+
+                let parent = $(even.target).parents(".chart-bigBox");
+                let id = '';
+                if (parent) {
+                    vue.whichChart = parent.find('.chart-box').attr('id');
+                }
+            },
+            findChart(name) {
+                // let _this = this;
+                for (let i = 0; i < this.charts.length; i++) {
+                    let tchart = this.charts[i];
+                    if (tchart.id === name) return tchart;
+                }
+            },
+            findOriginalChartByType(type) {
+                type += '';
+                type = type.slice(0, 1).toUpperCase() + type.slice(1);
+                let chartType = 'chart' + type;
+                // if (type === 'line' || type === 'bar') {
+                //     return $.extend(true, {}, this.chartLine);
+                // }else if() else if (type === 'pie') {
+                //     return $.extend(true, {}, this.chartPie);
+                // }
+                return $.extend(true, {}, this[chartType]);
+            },
+            showAlertBox(tclass, s) {
+                this.alertBox.class = tclass;
+                this.alertBox.text = s;
+                this.alertBox.show = true;
+                var time = setTimeout(function () {
+                    vue.alertBox.show = false;
+                }, 2000);
+            },
+            initialize(array) {
+
+                let original = $.extend(true, {}, this.originalDataDemo);
+                for (let i = 0; i < array.length; i++) {
+                    let prop = array[i];
+                    if (prop === 'option' || prop === 'others') {
+                        let chart = this.findOriginalChartByType(this.chartTYPE);
+                        Vue.set(this, prop, chart[prop]);
+                    } else if (prop === 'dataset') {
+                        let dataset = original.dataset;
+                        dataset.whichDataset = this.dataset.whichDataset;
+                        Vue.set(this, prop, dataset);
+                    } else {
+                        Vue.set(this, prop, original[prop]);
+                    }
+                }
+            },
+
+            //线图柱图
+            updateDatasetLineBar(chart = this) {
+                //设置seires 度量name
+                //设置others.seriesTooltipValue
+
+                let dataset = chart.dataset;
+                // let storage = dataset.storage;
+                let checked = dataset.checked;
+                let tseries = [];
+                var measure_len = checked.measure.length;
+                var demension_len = checked.demension.length;
+
+
+                //series.data
+                let series = chart.option.series;
+                for (let i = 0; i < series.length; i++) {
+                    series[i].data = this.datasetNameToArray(checked.measure[i], chart);
+
+                }
+
+
+
+                //设置 维度,xAxis
+                if (chart.option.xAxis) {
+                    // if (demension_len === 1) {
+                    //     一个维度时
+                    let tname = checked.demension[0];
+                    chart.option.xAxis[0].data = $.extend(true, [], this.datasetNameToArray(tname, chart));
+
+                    // } else {
+                    //     // 合并多个维度的名字,以“- -”连接
+                    //     var fisrtDemension = $.extend(true, {}, this.datasetNameToArray(checked.demension[0]));
+                    //     for (let i = 1; i < demension_len; i++) {
+                    //         let t = this.datasetNameToArray(checked.demension[i]);
+                    //         for (var j = 0; j < t.length; j++) {
+                    //             if (j < t.length) {
+                    //                 fisrtDemension[j] += "--" + t[j];
+                    //             }
+                    //         }
+                    //     }
+                    //     // 赋值
+                    //     this.option.xAxis[0].data = $.extend(true, [], fisrtDemension);
+                    // }
+                }
+
+
+                // 设置y轴名字,yAxis
+                if (chart.option.yAxis) {
+                    // var tyAxisDemo = $.extend(true, {}, dataset.yAxisdemo);
+                    var tyAxisDemo = $.extend(true, {}, chart.option.yAxis[0]);
+                    if (checked.measure.length >= 1) {
+                        tyAxisDemo.name = checked.measure.length === 1 ? checked.measure[0] : "计量";
+                        chart.option.yAxis = $.extend(true, [], chart.option.yAxis, [tyAxisDemo]);
+                    }
+                }
+
+            },
+
+            addGird(top, right, bottom, left) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (top) {
+                    this.option.grid.top = top;
+                }
+                if (right) {
+                    this.option.grid.right = right;
+                }
+                if (bottom) {
+                    this.option.grid.bottom = bottom;
+                }
+                if (left) {
+                    this.option.grid.left = left;
+                }
+            },
+            //饼图
+            updateDatasetPie(chart = this) {
+                let dataset = chart.dataset;
+                let checked = dataset.checked;
+                chart.option.series[0].data = [];
+                let demension = this.datasetNameToArray(checked.demension[0], chart);
+                let measure = this.datasetNameToArray(checked.measure[0], chart);
+                for (let i = 0; i < demension.length; i++) {
+                    chart.option.series[0].data.push({'value': measure[i], 'name': demension[i]})
+                }
+                chart.others.seriesData = $.extend(true, [], chart.option.series[0].data);
+            },
+
+            // radiusAnd
+        },
+
+        computed: {
+            chartTYPE() {
+                if(this.option.series[0]){
+                    return this.option.series[0].type;
+                }else {
+                    return '';
+                }
+
+            },
+            alias() {
+                // if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                let result = {};
+                let legendDate = this.option.legend.data;
+                //度量原名数组
+                let measure = this.dataset.storage.checkedMeasure;
+                if (measure.length > 0) {
+                    for (let i = 0; i < legendDate.length; i++) {
+                        result[measure[i]] = legendDate[i]
+                    }
+                }
+                return result;
+            },
+            //求维度数组
+            dimensionArray() {
+                let chartData = this.dataset.storage.chartData;
+                if (chartData) {
+                    let aDimension = [];
+                    for (let key in chartData) {
+                        // let dimension = '';
+                        // key = key.replace('[','');
+                        // key = key.replace(']','');
+                        // key = key.replace(',','-');
+                        // key = key.replace(' ','');
+
+                        // for(let item in eval(key)){
+                        //     dimension += item +'-';
+                        // }
+                        // dimension = dimension.substring(0,dimension.length - 1);
+                        aDimension.push(key);
+                    }
+                    return aDimension;
+                } else {
+                    return [];
+                }
+            },
+            //求度量数组
+            measureArray() {
+                // let dimension = this.dimensionArray;
+                let chartData = this.dataset.storage.chartData;
+                let dimension = [];
+
+                dimension = Object.keys(chartData);
+
+                if (dimension !== []) {
+                    let len = chartData[dimension[0]].length;
+                    let aMeasure = new Array(len);
+                    for (let i = 0; i < len; i++) {
+                        aMeasure[i] = [];
+                    }
+                    for (let i = 0; i < dimension.length; i++) {
+                        let array = chartData[dimension[i]];
+                        for (let j = 0; j < len; j++) {
+                            aMeasure[j].push(array[j]);
+                        }
+                    }
+                    return aMeasure;
+                } else {
+                    return [];
+                }
+
+            },
+
+            //线图柱图
+            axisArray() {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                let result = '';
+                let len = this.option.yAxis.length;
+                if (len === 1) {
+                    result = [
+                        {name: 'horizontal', text: '水平轴'},
+                        {name: 'vertical-left', text: '垂直左轴'}];
+                } else if (len === 2) {
+                    result = [
+                        {name: 'horizontal', text: '水平轴'},
+                        {name: 'vertical-left', text: '垂直左轴'},
+                        {name: 'veritcal-right', text: '垂直右轴'}]
+                }
+                return result;
+            },
+            computedGrid() {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+                let option = this.option;
+
+                let top = 20;
+                let left = 15;
+                let right = 15;
+                let bottom = 20;
+
+                // top
+                top += (option.title.show ||
+                    (option.legend.show && option.legend.top === 'top')) ? 25 : 0;
+                top += option.title.subtext ? 10 : 0;
+
+                //left
+                left += option.yAxis[0] && option.yAxis[0].name ? 15 : 0;
+                left += option.legend.show && option.legend.left === 'left' ? 70 : 0;
+
+                //right
+                right += option.yAxis[1] && option.yAxis[1].name ? 15 : 0;
+                right += option.legend.show && option.legend.left === 'right' ? 70 : 0;
+
+                //bottom
+                //grid
+                bottom += option.xAxis[0].name ? 15 : 0;
+                bottom += this.others.tuliPosition === 'bottom' ? 15 : 0;
+                if (option.dataZoom) {
+                    bottom += option.dataZoom[0].show ? 25 : 0;
+                }
+                this.addGird(top, right, bottom, left);
+
+                return '';
+            },
+            computedLegendPosition() {
+                //legend
+                if (!this.others.tuliPosition) return;
+
+                let option = this.option;
+                if (this.others.tuliPosition === 'bottom') {
+                    Vue.delete(this.option.legend, 'top');
+                    Vue.set(this.option.legend, 'bottom', 0);
+                    if (this.option.dataZoom) {
+                        option.legend.bottom = this.option.dataZoom[0].show ? 40 : 10;
+                    }
+
+                } else {
+                    Vue.delete(this.option.legend, 'bottom');
+                    //还原legend.top属性
+                    if (!this.option.legend.top) {
+                        Vue.set(this.option.legend, 'top', this.others.tuliPosition);
+                    }
+                    // legend在上方时，位置与标题副标题的设置
+                    let option = this.option;
+                    if (this.others.tuliPosition === 'top') {
+                        let top = 0;
+                        if (option.title.show) {
+                            top += option.title.text ? 15 : 0;
+                            top += option.title.subtext ? 20 : 0;
+                        }
+                        top += this.others.tuliPosition === 'left' ? 5 : 0;
+                        option.legend.top = top;
+                    } else if (this.others.tuliPosition === 'left' || this.others.tuliPosition === 'right') {
+                        let top = 5;
+                        if (option.title.show) {
+                            top += option.title.text ? 15 : 0;
+                            top += option.title.subtext ? 20 : 0;
+                        }
+                        option.legend.top = top;
+                    }
+                }
+
+                return;
+            },
+            computedNameGap() {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (!this.option.yAxis || !this.option.xAxis) return '';
+                for (let i = 0; i < this.option.yAxis.length; i++) {
+                    let yAxis = this.option.yAxis[i];
+                    yAxis.nameGap = yAxis.axisLabel.show ? 30 : 5;
+                }
+                for (let i = 0; i < this.option.xAxis.length; i++) {
+                    let xAxis = this.option.xAxis[i];
+                    xAxis.nameGap = xAxis.axisLabel.show ? 25 : 5;
+                }
+                return '';
+
+                //bar
+            },
+            //饼图
+            radius() {
+                if (this.chartTYPE !== 'pie') return;
+                let aRadius = eval($.extend(true, [], this.others.radius));
+
+                let per = (this.others.radiusPercentage).replace('%', '') / 100;
+                for (let i = 0; i < aRadius.length; i++) {
+                    aRadius[i] = aRadius[i].toString().replace('%', '') * per + '%';
+                }
+
+                let option = this.option;
+                option.series[0].radius = aRadius;
+
+                return;
+            }
+        },
+        watch: {
+            //公共
+            // 当option里的数据发生变化时，重新渲染图表
+            option: {
+                //当option有变化时，信息进行储存
+                handler(cur, old) {
+                    if (this.whichChart === '') return;
+
+                    //全局vue,将修改的图表信息储存在charts值里。
+                    this.CopyIndependent(this.findChart(this.whichChart), this);
+
+                    if (this.setOption) {
+                        this.$nextTick(function () {
+                            this.eChartSetOption(vue.whichChart, vue.option);
+                            console.log('option change')
+                            console.log(vue.option)
+                            // discountChart(vue.whichChart, vue.option);
+                        });
+
+                    }
+
+                },
+                deep: true
+            },
+            //不宜放在option，但与option息息相关的属性侦听
+            others: {
+
+                //当option有变化时，信息进行储存
+                handler(cur, old) {
+                    if (this.whichChart === '') return;
+
+                    //全局vue,将修改的图表信息储存在charts值里。
+                    this.CopyIndependent(this.findChart(this.whichChart), this);
+                },
+                deep: true
+            },
+            //切换图表时，信息更新
+            whichChart(curVal, oldVal) {
+                this.setOption = false;
+
+                if (curVal === '') {
+                    //某些功能...
+                    return;
+                }
+
+                // 初始化vue
+                let initialArray = ['currentPanel', 'checkAxis', 'checkSeriesIndex', 'dataset', 'others', 'option'];
+                this.initialize(initialArray);
+
+                //读取chart信息到vue
+                var tchart = this.findChart(curVal);
+                vue.CopyIndependent(vue, tchart);
+
+                //避免切换图表时的重新渲染图表
+                setTimeout(function () {
+                    vue.setOption = true;
+                }, 500);
+
+            },
+            mode(val) {
+                if (val !== 'edit' && val !== 'preview') return;
+                let charts = this.charts;
+                //先储存现图表大小位置比例
+                this.setChartsPositionSize();
+
+                //界面先发生改变
+                if (val === 'edit') {
+                    $('.operate-sm').css('right', '140px');
+                    $('.left-icons').css('display', 'block');
+                    $('.right-page').css('display', 'block');
+                    $('.left-page').css('width', 'calc(100% - 400px)');
+
+                } else if (val === 'preview') {
+                    $('.operate-sm').css('right', '40px');
+                    $('.left-icons').css('display', 'none');
+                    $('.left-page').css('width', '100%');
+                    $('.right-page').css('display', 'none');
+
+                }
+                //图表再根据新界面发生重构
+                let parentWidth = parseFloat($('.left-page').css('width'));
+                let parentHeight = parseFloat($('.left-page').css('height'));
+
+                charts = $.extend(true, [], this.charts);
+                this.restructureChartsPositionSize(charts, [parentWidth, parentHeight])
+
+
+            },
+            "dataset.whichDataset": function (val) {
+                if (!val) return;
+                let _this = this;
+                this.initialize(['dataset']);
+
+                // 查询文件度量和维度：
+                oOrdinaryJqueryAjax({
+                    url: url_root + "fileHandle/getInfo.json?method=getHeader",
+                    data: {
+                        fileName: this.dataset.whichDataset,
+                        userId
+                    }
+                }, function (response) {
+                    if (response.message === "Success") {
+                        let vd = response.data;
+                        if (vd) {
+                            let demensions = {};
+                            let measures = {};
+                            //维度
+                            let v = vd.v;
+                            for (let i = 0; i < v.length; i++) {
+                                demensions[v[i].colmName] = v[i].colmId;
+                            }
+                            //度量
+                            let d = vd.d;
+                            for (let i = 0; i < d.length; i++) {
+                                measures[d[i].colmName] = d[i].colmId;
+                            }
+                            _this.dataset.demensions = demensions;
+                            _this.dataset.measures = measures;
+                        }
+                    } else {
+                        console.log("查询维度失败: %s", response)
+                    }
+                });
+            },
+            "dataset.previewRows": function (rows) {
+                if (rows < 1) {
+                    setTimeout(function () {
+                        if (vue.dataset.previewRows < 1) {
+                            vue.dataset.previewRows = 1;
+                        }
+                    }, 500)
+                }
+
+                // let dataset = this.dataset;
+                // let checkedDemension = dataset.demensions[dataset.checked.demension[0]];
+                // if(!checkedDemension){
+                //     if(rows < 1){
+                //         setTimeout(function () {
+                //             if(vue.dataset.previewRows < 1){
+                //                 vue.dataset.previewRows = 1;
+                //             }
+                //         },500)
+                //     }
+                //     return;
+                // }
+                // let maxRows = checkedDemension.length;
+                // if(rows > maxRows){
+                //     this.dataset.previewRows = maxRows;
+                // }else if( rows < 1){
+                //     setTimeout(function () {
+                //         if(vue.dataset.previewRows < 1){
+                //             vue.dataset.previewRows = 1;
+                //         }
+                //     },300)
+                // }
+            },
+            //侦听图表背景色
+            "option.backgroundColor": function (val) {
+
+                let newcolor = '#333';
+                //深色背景
+                if (val === '#073358') {
+                    newcolor = '#fff';
+
+                    if (this.option.dataZoom) {
+                        this.option.dataZoom[0].backgroundColor = 'rgba(255,255,255,0.9)';
+                        this.option.dataZoom[0].textStyle.color = '#999';
+                    }
+                    //标题颜色未设置，则变白
+                    if (this.option.title.textStyle.color === '#333') {
+                        this.option.title.textStyle.color = newcolor;
+                    }
+                    //浅色背景
+                } else if (val === '#ffffff' || val === '#f3f3f3') {
+                    newcolor = '#333';
+
+                    if (this.option.dataZoom) {
+                        this.option.dataZoom[0].backgroundColor = 'rgba(47,69,84,0)';
+                        this.option.dataZoom[0].textStyle.color = newcolor;
+                    }
+                } else {
+                    return;
+                }
+                this.option.title.textStyle.color = newcolor;
+                this.option.legend.textStyle.color = newcolor;
+                if (this.option.yAxis) {
+                    let yAxis = this.option.yAxis;
+                    for (let i = 0; i < yAxis.length; i++) {
+                        yAxis[i].axisLine.lineStyle.color = newcolor;
+                        yAxis[i].axisLabel.color = newcolor;
+                        yAxis[i].nameTextStyle.color = newcolor;
+                    }
+
+                }
+                if (this.option.xAxis) {
+                    this.option.xAxis[0].axisLine.lineStyle.color = newcolor;
+                    this.option.xAxis[0].axisLabel.color = newcolor;
+                    this.option.xAxis[0].nameTextStyle.color = newcolor;
+                }
+                //饼图
+                if (this.option.series[0].label) {
+                    this.option.series[0].label.color = newcolor;
+                }
+
+            },
+            //监听图例位置
+            "others.tuliPosition": function (val) {
+                // if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                let legend = this.option.legend;
+                if (val === "null") {
+                    legend.show = false;
+                } else if (val === 'top' || val === 'bottom') {
+                    legend.show = true;
+                    legend.orient = 'horizontal';
+                    legend.left = 'center';
+                    legend.top = val === 'top' ? 'top' : 'bottom';
+
+                } else {
+                    legend.show = true;
+                    legend.orient = 'vertical';
+                    legend.top = 'middle';
+                    legend.left = val === 'left' ? 'left' : 'right';
+                }
+            },
+
+            //线图柱图
+            //控制是否为曲线
+            "others.quxian": function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                var series = this.option.series;
+                for (var i = 0; i < series.length; i++) {
+                    series[i].smooth = val;
+                }
+            },
+
+
+            // 'option.backgroundColor':function (bgColor) {
+            //   if(this.chartTYPE !== 'pie') return;
+            //   console.log('bgColor');
+            // },
+            //双y轴切换
+            'others.doubleYAxis': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (this.option.series.length < 2) return;
+                // 不要双y轴
+                if (val === false) {
+                    if (this.option.yAxis.length === 2) {
+                        this.option.yAxis.pop();
+                        this.option.series[1].yAxisIndex = 0;
+                        this.option.series[1].type = this.option.series[0].type;
+                        this.option.series[1].z = 2;
+
+                        //修正坐标轴的选择
+                        if (this.axisArray && this.checkAxis !== this.axisArray[0].name
+                            && this.checkAxis !== this.axisArray[1].name) {
+                            this.checkAxis = this.axisArray[0].name;
+                        }
+                    }
+                } else {
+                    // 双y轴
+                    if (this.option.yAxis.length === 1) {
+                        var yAxisDemo = $.extend(true, {}, this.originalDataDemo.option.yAxis[0]);
+                        this.option.series[1].yAxisIndex = 1;
+                        let secondSerie = this.option.series[1];
+                        yAxisDemo.name = secondSerie.name;
+                        this.option.yAxis.push(yAxisDemo);
+                        this.option.series[1].type = 'bar';
+                        this.option.series[1].z = 0;
+                    }
+
+                }
+
+            },
+            'others.chartType': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                var array = eval('(' + val + ')');
+                var series = this.option.series;
+                for (var i = 0; i < series.length; i++) {
+                    if (array.areaStyle === '') Vue.delete(series[i], 'areaStyle');
+                    else Vue.set(series[i], 'areaStyle', {});
+                    series[i].stack = array.stack;
+                }
+            },
+            'others.dataLabel': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+
+                for (let i = 0; i < this.option.series.length; i++) {
+                    this.option.series[i].label.show = val;
+                }
+            },
+            //水平轴颜色组件绑定们
+            'others.hzTitle': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (val === '') {
+                    this.option.xAxis[0].name = '';
+                    return;
+                }
+                this.option.xAxis[0].name = this.others.hzUnit ? val + '(' + this.others.hzUnit + ')' : val;
+            },
+            'others.hzUnit': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (this.others.hzTitle === '') return;
+                let unit = val ? '(' + val + ')' : val;
+                this.option.xAxis[0].name = this.others.hzTitle + unit;
+            },
+            //垂直左轴
+            'others.vlTitle': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (val === '') {
+                    this.option.yAxis[0].name = '';
+                    return;
+                }
+                this.option.yAxis[0].name = this.others.vlUnit ? val + '(' + this.others.vlUnit + ')' : val;
+            },
+            'others.vlUnit': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (this.others.vlTitle === '') return;
+                let unit = val ? '(' + val + ')' : val;
+                this.option.yAxis[0].name = this.others.vlTitle + unit;
+            },
+            //垂直右轴
+            'others.vrTitle': function (val) {
+                if (this.chartTYPE !== 'line'
+                    && this.chartTYPE !== 'bar') return;
+                if (this.option.yAxis.length < 2) return;
+
+                if (val === '') {
+                    this.option.yAxis[1].name = '';
+                    return;
+                }
+                this.option.yAxis[1].name = this.others.vrUnit ? val + '(' + this.others.vrUnit + ')' : val;
+            },
+            'others.vrUnit': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (this.others.vrTitle === '') return;
+                let unit = val ? '(' + val + ')' : val;
+                this.option.yAxis[1].name = this.others.vrTitle + unit;
+            },
+            'others.maximumValue': function (val) {
+                if (this.chartTYPE !== 'line' && this.chartTYPE !== 'bar') return;
+
+                if (this.option.series[0].markPoint === undefined) return;
+                let data = [
+                    {type: 'max', name: '最大值'},
+                    {type: 'min', name: '最小值'}];
+                for (let i = 0; i < this.option.series.length; i++) {
+                    this.option.series[i].markPoint.data = val[i] ? data : [];
+                }
+
+            },
+            //饼图
+            'dataset.checked.demension': function (val) {
+                if (this.chartTYPE !== 'pie') return;
+                if (val.length > 1) {
+                    val.pop();
+                    let text = "已超过饼图维度最多可添加项数量（1）"
+                    this.showAlertBox('bg-danger', text);
+                }
+            },
+            'dataset.checked.measure': function (val) {
+                if (this.chartTYPE !== 'pie') return;
+                if (val.length > 1) {
+                    val.pop();
+                    let text = "已超过饼图度量最多可添加项数量（1）"
+                    this.showAlertBox('bg-danger', text);
+                }
+            },
+            'option.series.0.label.formatter': function (val) {
+                if (this.chartTYPE !== 'pie') return;
+                this.option.series[0].label.show = !!val;
+            }
+        },
+        created: function () {
+            let _this = this;
+
+            //仪表盘名字储存
+            let boardname = window.location.href.split('boardname=')[1];
+            if(boardname){
+                this.boardname = boardname;
+            }
+
+            //获取仪表盘信息
+            oOrdinaryJqueryAjax({
+                url: url_root+"dashboard/boardaction.json?method=get",
+                data:{
+                    boardname: this.boardname
+                }
+            },function (response) {
+                if(response.message === 'Success'){
+
+                   if(response.data){
+                       let data =  JSON.parse(response.data);
+                       _this.charts = data.charts;
+                       _this.CopyIndependent(_this, _this.charts[0]);
+                       _this.whichChart = '';
+                       let charts = _this.charts;
+
+                       //渲染charts所有图表
+                       _this.$nextTick(()=>{
+                           _this.callRestructureChartsPositionSize(false);
+
+                           for(let i=0; i<charts.length; i++){
+
+                              // console.log(charts[i].option.series[0])
+                               _this.packageCallupdateData(charts[i]);
+                               // console.log('update:')
+                               // console.log(charts[i].option)
+                               _this.vueDraggableResizableLeftTop(charts[i].id);
+
+                               // 渲染所有charts的图表
+                               setTimeout(()=>{
+                                   _this.eChartSetOption(charts[i].id , charts[i].option);
+                               },100)
+
+                           }
+                       });
+                       // _this.$nextTick(()=>{
+                       //     for(let i=0; i<charts.length; i++){
+                       //         _this.eChartSetOption(charts[i].id , charts[i].option);
+                       //     }
+                       // });
+
+                   }else{
+                       _this.option = $.extend(true, {}, _this.chartLine.option);
+                       _this.others = $.extend(true, {}, _this.chartLine.others);
+                       let tchart = _this.charts[0];
+                       _this.CopyIndependent(tchart, _this);
+                   }
+                }
+            });
+
+
+
+
+            //已上传文件有哪些,并赋值
+            oOrdinaryJqueryAjax({
+                url: url_root + "hadoop/get.json?method=list",
+                data: {
+                    userId
+                }
+            }, function (response) {
+                if (response.message === "Success") {
+                    let files = response.data;
+                    if (files) {
+
+                        let aFilesName = [];
+                        for (let i = 0; i < files.length; i++) {
+                            aFilesName.push(files[i].fileName);
+                        }
+                        _this.aFilesName = aFilesName;
+                    } else {
+                        console.log('已files错误');
+                    }
+                } else {
+                    console.log('查询已上传文件：' + response);
+                }
+            });
+
+
+
+            let data = $.extend(true, {}, this.$data);
+            delete data.originalDataDemo;
+
+            // this.datasetArray = ['file0', 'file1', 'file2'];
+
+
+            this.originalDataDemo = data;
+
+
+            // 请求有对应数据集，有哪些维度和度量，然后赋值
+            // this.dataset.demensions = {'地区': 2, '剧情': 3};
+            // this.dataset.measures = {'dataName0': 6, 'dataName1': 7};
+
+            //
+
+
+        },
+        mounted: function () {
+
+            // 渲染所有charts的图表
+
+
+
+
+
+            // this.eChartSetOption("chart0", this.chartLine.option);
+
+            //移动端
+            $(".leftbox").on('touchend', '.chartBox', function (ev) {
+                // console.log('chartBox:touchend');
+                let curTime = new Date().getTime();
+                if (curTime - vue.chartBoxTouchEnd < 300) {
+                    vue.dragCancel = false;
+                }
+                vue.chartBoxTouchEnd = curTime;
+                let chartId = $(ev.target).parents('.chart-bigBox').find('.chart-box').attr('id');
+                //更新whichChart;
+                vue.whichChart = chartId;
+            });
+            $(document).on('tap', '#all', function () {
+                console.log('all:tap');
+                vue.dragCancel = true;
+            });
+
+            //pc端
+            $('.leftbox').on('mouseover', '.chartBox', function () {
+                vue.hoverChart = $(this).find('.chart-box').attr('id');
+            }).on('mouseleave', '.chartBox', function () {
+                vue.hoverChart = '';
+            });
+            //双击调可拖拽
+            $(".leftbox").on('click', '.chartBox', function (ev) {
+                ev.stopPropagation();
+                let curTime = new Date().getTime();
+                if (curTime - vue.chartBoxClick < 300) {
+                    vue.dragCancel = false;
+                }
+                vue.chartBoxClick = curTime;
+                let chartId = $(ev.target).parents('.chart-bigBox').find('.chart-box').attr('id');
+                //更新whichChart;
+                vue.whichChart = chartId;
+            });
+            $('#all').on('click', function () {
+                console.log('click');
+                vue.dragCancel = true;
+            })
+            // $(".chartBox").on('mouseenter',function(){
+            //     console.log("mouseenter");
+            // });
+            // $(".chartBox").on('mouseover',function(){
+            //     console.log("mouseover");
+            // });
+            // $(".chartBox").on('mouseleave',function(){
+            //     console.log("mouseleave");
+            // });
+            // $(".leftbox").on('touchstart',function(){
+            //     console.log("touchstart");
+            // });
+            // $(".leftbox").on('touchmove',function(){
+            //     console.log("touchmove");
+            // });
+            //
+            // $(".leftbox").on('touchend',function(){
+            //     console.log("touchend");
+            // });
+            //
+            //     $(".leftbox").on("tap",function(){
+            //         console.log("tap");
+            //     });
+            // $(".leftbox").on("taphold",function(){
+            //     console.log("taphold");
+            // });
+
+            // 并刷新whichChart值
+            // for (var i = 0; i < this.charts.length; i++) {
+            //     var tchart = this.charts[i];
+            //     if (tchart.id === this.whichChart) {
+            //         this.CopyIndependent(tchart, this);
+            //         break;
+            //     }
+            // }
+        }
+    });
+
+
+    //渲染图表，并刷新whichChart值
+
+
+</script>
+<!--组件库-->
+<script type="text/x-template" id="color-picker-template">
+    <span :id="_id" class="input-group" style="width: 40px;">
+            <span class="input-group-text colorpicker-input-addon"
+                  style="padding: .25rem;border-radius: 0 .25rem .25rem 0;">
+                <i style="min-width: 20px;min-height: 20px"></i>
+            </span>
+    </span>
+</script>
+<script>
+    Vue.component('color-picker', {
+        props: ['_id', 'target'],
+        template: '#color-picker-template',
+        mounted: function () {
+            let that = this;
+            $('#' + this._id).colorpicker({
+                debug: true
+            }).on('colorpickerDebug', function () {
+                let tColor = $(this).find('i').css('backgroundColor');
+                //避免开始都是默认值（黑色）不好看，以后可以调色中也可近似到纯黑，影响不大
+                if (tColor === 'rgb(0, 0, 0)') return;
+                that.target.color = $(this).find('i').css('backgroundColor');
+            });
+        }
+    });
+</script>
+<script type="text/x-template" id="vertical-axis-tempalte">
+    <div v-if="target">
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <label class="input-group-text" :for="_id+'-title'">轴标题</label>
+            </div>
+            <input class="form-control" :id="_id+'-title'" v-model="data.others[_id+'Title']"/>
+            <div class="input-group-append">
+                <color-picker :_id="_id+'-title-color'" :target="target.nameTextStyle"></color-picker>
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <label class="input-group-text" :for="_id+'_unit'">单位</label>
+            </div>
+            <input class="form-control" :id="_id+'_unit'" v-model="data.others[_id+'Unit']" />
+
+        </div>
+        <!--&lt;!&ndash;轴线设置&ndash;&gt;-->
+        <!--<div style="display: flex;flex-wrap: nowrap;">-->
+        <!--<input type="checkbox" :id="_id+'-axisLine'" v-model="target.axisLine.show"/>-->
+        <!--<label :for="_id+'-axisLine'">轴线</label>-->
+
+        <!--<color-picker :_id="_id+'-axisLine-color'" :target="target.axisLine.lineStyle"></color-picker>-->
+
+        <!--<select v-model="target.axisLine.lineStyle.width">-->
+        <!--<option value=".4" selected>1px</option>-->
+        <!--<option value=".8">2px</option>-->
+        <!--<option value="1.2">3px</option>-->
+        <!--<option value="1.6">4px</option>-->
+        <!--<option value="2.0">5px</option>-->
+        <!--</select>-->
+        <!--<select v-model="target.axisLine.lineStyle.type">-->
+        <!--<option value="solid">实线</option>-->
+        <!--<option value="dashed">波折线</option>-->
+        <!--<option value="dotted">点线</option>-->
+        <!--</select>-->
+        <!--</div>-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                    <input type="checkbox" :id="_id+'-axisLine'" v-model="target.axisLine.show"/>
+                </span>
+
+                <label class="input-group-text" :for="_id+'-axisLine'">轴线</label>
+
+            </div>
+            <select class="form-control" v-model="target.axisLine.lineStyle.width">
+                <option value=".4" selected>1px</option>
+                <option value=".8">2px</option>
+                <option value="1.2">3px</option>
+                <option value="1.6">4px</option>
+                <option value="2.0">5px</option>
+            </select>
+            <select class="form-control" v-model="target.axisLine.lineStyle.type">
+                <option value="solid">实线</option>
+                <option value="dashed">波折线</option>
+                <option value="dotted">点线</option>
+            </select>
+            <color-picker :_id="_id+'-axisLine-color'" :target="target.axisLine.lineStyle"></color-picker>
+        </div>
+
+        <!--最小值最大值-->
+        <div class="input-group mb-3" v-if="!target.data" v-for="item in ['min', 'max']">
+            <div class="input-group-prepend">
+                <label class="input-group-text" v-if="item === 'min'">最小值：</label>
+                <label class="input-group-text" v-else>最大值：</label>
+                <span class="input-group-text">
+                    <input  type="checkbox" :id="_id+'-'+item" v-model="target[item]" :true-value="null" :false-value="0"/>
+                </span>
+                <label class="input-group-text" :for="_id+'-'+item">自动</label>
+            </div>
+            <input class="form-control" v-show="target[item] !== null" type="number" v-model="target[item]">
+        </div>
+
+        <!--轴值设置-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                    <input type="checkbox" :id="_id+'-axisLabel'" v-model="target.axisLabel.show"/>
+                </span>
+                <label class="input-group-text" :for="_id+'-axisLabel'">轴值</label>
+            </div>
+
+            <color-picker :_id="_id+'-axisLabel-color'" :target="target.axisLabel"></color-picker>
+        </div>
+        <!--网格线-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                     <input type="checkbox" :id="_id+'-splitLine'" v-model="target.splitLine.show"/>
+                </span>
+                <label class="input-group-text" :for="_id+'-splitLine'">网格线</label>
+            </div>
+            <color-picker :_id="_id+'-splitLine-color'" :target="target.splitLine.lineStyle"></color-picker>
+
+            <div class="input-group-prepend">
+                <select class="form-control" v-model="target.splitLine.lineStyle.width">
+                    <option value=".4" selected>1px</option>
+                    <option value=".8">2px</option>
+                    <option value="1.2">3px</option>
+                    <option value="1.6">4px</option>
+                    <option value="2.0">5px</option>
+                </select>
+            </div>
+            <select class="form-control" v-model="target.splitLine.lineStyle.type">
+                <option value="solid">实线</option>
+                <option value="dashed">波折线</option>
+                <option value="dotted">点线</option>
+            </select>
+        </div>
+        <!--刻度-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                     <input type="checkbox" :id="_id+'-axisTick'" v-model="target.axisTick.show"/>
+                </span>
+            </div>
+           <div class="input-group-append">
+               <label class="input-group-text" :for="_id+'-axisTick'">刻度</label>
+           </div>
+        </div>
+
+    </div>
+
+</script>
+<script>
+    Vue.component('vertical-axis', {
+        props: ['_id', 'target'],
+        template: '#vertical-axis-tempalte',
+        data: function () {
+            return {
+                data: vue.$data
+            }
+        },
+        mounted: function () {
+        }
+    });
+</script>
+<script type="text/x-template" id="tooltip-value-format-template">
+    <div v-if="tSeriesTooltipValue" class="spacing">
+
+        <div>数据显示格式设置</div>
+
+        <div class="radio-group">
+            <label :class="['radio-button',{checked: tSeriesTooltipValue[0] === '#' }]">
+                <input type="radio" class="radio-input" v-model="tSeriesTooltipValue[0]" value="#"/>
+                <span>显示为数值</span>
+            </label>
+            <label :class="['radio-button',{checked: tSeriesTooltipValue[0] === '%' }]">
+                <input type="radio" class="radio-input" v-model="tSeriesTooltipValue[0]" value="%"/>
+
+                <span v-if="chartTYPE && chartTYPE=== 'pie'">显示百分位</span>
+                <span v-else>显示为百分比</span>
+            </label>
+        </div>
+
+        <div class="input-group mb-3" v-if="tSeriesTooltipValue">
+            <div class="input-group-prepend">
+                <label class="input-group-text">小数点</label>
+            </div>
+            <select class="input-group-prepend form-control" v-model="tSeriesTooltipValue[1]">
+                <option :value="0">无</option>
+                <option v-for="n in [1,2,3,4,5]" :value="n">{{n}}</option>
+            </select>
+        </div>
+
+        <div class="input-group mb-3" style="height: 29px;">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                    <input type="checkbox" :id="'thousandth-system'+dirIndex" v-model="tSeriesTooltipValue[2]">
+                </span>
+            </div>
+            <div class="input-group-append">
+                <label class="input-group-text" :for="'thousandth-system'+dirIndex">使用千分位分隔符</label>
+            </div>
+        </div>
+
+    </div>
+</script>
+<script>
+    Vue.component("tooltip-value-format", {
+        props: {
+            'tSeriesTooltipValue': {
+                required: true
+            },
+            'dirIndex': {
+                default: ''
+            },
+            'chartTYPE': {
+                default: ''
+            }
+        },
+        template: '#tooltip-value-format-template'
+    });
+</script>
+<script type="text/x-template" id="series-setup-template">
+    <div class="spacing">
+        <div>
+            <label>别名</label><br/>
+            <input v-model="tSeries.name" class="form-control"
+                   :key="seriesIndex"/>
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <label class="input-group-text">类型</label>
+            </div>
+            <select v-model="tSeries.type" class="form-control" style="border:transparent;color:white;">
+                <option value="line">线图</option>
+                <option value="bar">柱图</option>
+            </select>
+            <color-picker :_id="'series'+dirIndex" :target="tSeries.itemStyle"></color-picker>
+        </div>
+
+        <div v-if="tSeries.type == 'line'||tSeries.type == 'bar'" class=" mb-3">
+            <label>坐标轴</label>
+            <div class="input-group">
+
+                <label class="radio-inline" style="margin-right: 90px;">
+                    <input type="radio" :id="'yAxisIndex0-'+dirIndex" value="0" v-model="tSeries.yAxisIndex"/>
+                    主轴
+                </label>
+
+                <label class="radio-inline" >
+                    <input type="radio" :id="'yAxisIndex1-'+dirIndex" value="1" v-model="tSeries.yAxisIndex"
+                           :disabled="slaveDisabled"/>
+                    从轴
+                </label>
+            </div>
+
+        </div>
+        <div v-if="tSeries.label" class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                     <input type="checkbox" :id="'labelShow'+dirIndex" v-model="tSeries.label.show"/>
+                </span>
+                <label class="input-group-text" :for="'labelShow'+dirIndex">显示图表数据标签</label>
+            </div>
+            <color-picker :_id="'labelColor'+dirIndex" :target="tSeries.label"></color-picker>
+        </div>
+
+        <div v-if="tSeries.type == 'line'||tSeries.type == 'bar'" class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                    <input type="checkbox" :id="'maximumShow'+dirIndex" v-model="maximumValue[dirIndex]"/>
+                </span>
+            </div>
+            <div class="input-group-append">
+                <label class="input-group-text" :for="'maximumShow'+dirIndex">显示最值</label>
+            </div>
+        </div>
+
+        <div v-if="tSeries.type == 'line'" class="input-group mb-3">
+            <div class="input-group-prepend">
+                <label class="input-group-text">线条样式</label>
+            </div>
+            <select class="form-control" v-model="tSeries.lineStyle.type">
+                <option value="solid">实线</option>
+                <option value="dashed">波折线</option>
+                <option value="dotted">点线</option>
+            </select>
+        </div>
+
+        <div v-if="tSeries.type == 'line'" class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                     <input type="checkbox" :id="'showSymbol'+dirIndex" v-model="tSeries.showSymbol"/>
+                </span>
+                <label class="input-group-text" :for="'showSymbol'+dirIndex">显示标记点</label>
+            </div>
+            <select class="form-control" v-model="tSeries.symbol">
+                <option value="circle">圆</option>
+                <option value="emptyCircle">空心圆</option>
+                <option value="rect">正方形</option>
+                <option value="roundRect">圆润正方形</option>
+                <option value="triangle">三角形</option>
+                <option value="diamond">菱形</option>
+                <option value="pin">大头针</option>
+                <option value="arrow">箭头</option>
+            </select>
+        </div>
+
+        <tooltip-value-format :tSeriesTooltipValue="tSeriesTooltipValue"
+                              :dirIndex="dirIndex"></tooltip-value-format>
+
+    </div>
+</script>
+<script>
+    Vue.component('series-setup', {
+        props:
+            ['tSeries', 'dirIndex', 'seriesIndex',
+                'datasetMeasure', 'tSeriesTooltipValue',
+                'maximumValue'],
+        template: '#series-setup-template',
+        data: function () {
+            return {
+                // maximumValue: vue.others.maximumValue,
+            }
+        },
+        watch: {
+            'tSeries.name': function (val) {
+                vue.nameSeriesToLegend();
+                let index = this.seriesIndex;
+            },
+            //控制yAxis[i]的show（显示）
+            'tSeries.yAxisIndex': function () {
+                if (!vue.option.yAxis) return;
+                let series = vue.option.series;
+                let yAxisIndexArray = new Array(vue.option.yAxis.length);
+                yAxisIndexArray.fill(0);
+                for (let i = 0; i < series.length; i++) {
+                    yAxisIndexArray[series[i].yAxisIndex]++;
+                }
+                for (let i = 0; i < yAxisIndexArray.length; i++) {
+                    vue.option.yAxis[i].show = yAxisIndexArray[i] !== 0;
+                }
+
+            }
+        },
+        computed: {
+            slaveDisabled: function () {
+                if (vue.option.yAxis === undefined) return;
+                return vue.option.yAxis.length < 2;
+            }
+        }
+    });
+</script>
+<script type="text/x-template" id="series-name-change-template">
+    <div v-if="nameObject">
+        <label>别名</label><br/>
+        <input class="from-control bg-gray-self"
+               style="border:transparent;color:white;"
+               v-model="nameObject.name"/>
+    </div>
+</script>
+<script>
+    Vue.component('series-name-change-legend', {
+        props: ['nameObject'],
+        template: '#series-name-change-template',
+        data: function () {
+            return {}
+        },
+        watch: {
+            'nameObject.name': function (val) {
+                vue.nameSeriesToLegend();
+            }
+        }
+    });
+</script>
+<script type="text/x-template" id="bs-dropdown-template">
+    <div style="position: absolute;right: 10px; top: 5px;">
+        <img v-if="id == whichChart" src="img/ellipsis.svg" class="dropdown-toggle">
+        <img v-else src="img/gray-ellipsis.svg" class="dropdown-toggle">
+
+        <div class="dropdown-menu" style="min-width: 7rem ;color: #007bff;left: -30px;">
+            <span class="dropdown-item " @click="deleteChart"><img src="img/cross.svg"/>   删除</span>
+        </div>
+    </div>
+
+</script>
+<script>
+    Vue.component('bs-dropdown', {
+        props: ['id', 'whichChart', 'charts'],
+        template: '#bs-dropdown-template',
+        methods: {
+            deleteChart() {
+
+                for (let i = 0; i < this.charts.length; i++) {
+                    let chart = this.charts[i];
+                    if (chart.id === this.id) {
+                        // $('#'+this.id).parents('.chart-bigBox').remove();
+                        this.charts.splice(i, 1);
+                        break
+                    }
+                }
+            }
+        },
+        mounted: function () {
+            $('.dropdown-toggle').click(function (e) {
+                $(this).siblings('.dropdown-menu').css('display', "block");
+                // e.stopPropagation();
+            });
+            $('.dropdown-menu').click(function (e) {
+                $(this).css('display', "none");
+                // e.stopPropagation();
+            });
+            $(document).click(function () {
+                $('.dropdown-menu').css('display', "none");
+            })
+        }
+    })
+</script>
+</html>
